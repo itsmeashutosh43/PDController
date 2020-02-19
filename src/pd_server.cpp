@@ -14,9 +14,12 @@
 #include <sensor_msgs/LaserScan.h>
 #include <algorithm>
 #include "bresenham2D.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "costmap_2d/costmap_2d_ros.h"
 
 class ControllerServer{
     protected:
+    
     ros::NodeHandle nh_;
     bool interrupt = false;
     bool getting_goal = false;
@@ -30,13 +33,26 @@ class ControllerServer{
     nav_msgs::Odometry curr_pose;
     bool success = false;
     bresenham2D find_obstacle;
+    costmap_2d::Costmap2DROS* costmap2d;
+    costmap_2d::Costmap2DROS *controller_costmap_ros_;
+    
+    tf2_ros::Buffer& tf_;
+    
+    
 
 
     public:
-    ControllerServer(std::string name):
+    ControllerServer(std::string name , tf2_ros::Buffer& tf):
     as_(nh_, name, boost::bind(&ControllerServer::executeCB, this, _1),false),
-    action_name(name)
+    action_name(name),
+    controller_costmap_ros_(NULL),
+    tf_(tf)
     {
+
+
+
+        controller_costmap_ros_ = new costmap_2d::Costmap2DROS("local_costmap", tf_);
+        controller_costmap_ros_->start();
        
         odom_callback = nh_.subscribe("/odom",1,&ControllerServer::odomCallback,this);
         vel_publisher = nh_.advertise<geometry_msgs::Twist>("/cmd_vel_mux/input/navi", 10);
@@ -69,6 +85,8 @@ class ControllerServer{
     {   
 
         geometry_msgs::PoseStamped pose = goal->position;
+
+        
 
 
         while (true){
@@ -143,7 +161,11 @@ class ControllerServer{
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "pd_server");
-    ControllerServer controller("pd_server");
+
+    tf2_ros::Buffer buffer(ros::Duration(10));
+    tf2_ros::TransformListener tf(buffer);
+    
+    ControllerServer controller("pd_server", buffer);
     ros::spin();
     return 0;
 }

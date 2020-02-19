@@ -4,9 +4,9 @@
 bresenham2D::bresenham2D()
 {    
   refresh_data();
-  costmap_subscriber = nh_.subscribe("/move_base/local_costmap/costmap",1,&bresenham2D::costmapCallback,this);  
+  costmap_subscriber = nh_.subscribe("/pd_server/local_costmap/costmap",1,&bresenham2D::costmapCallback,this);  
   amcl_pose = nh_.subscribe("/amcl_pose", 1 , &bresenham2D::amcl_callback, this);
-  footprint = nh_.subscribe("/move_base/local_costmap/footprint", 1 ,&bresenham2D::footprintCallback,this);
+  footprint = nh_.subscribe("/pd_server/local_costmap/footprint", 1 ,&bresenham2D::footprintCallback,this);
 }
 
 void bresenham2D::amcl_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr pose)

@@ -1,0 +1,11 @@
+<launch>
+
+<node name = "pd_server" pkg = "pd_controller" type = "pd_server" output = "screen">
+
+<rosparam file = "$(find pd_controller)/param/local_costmap_params.yaml" command = "load"/>
+
+</node>
+
+<node name = "tf_tree" pkg = "setup_tf_tree" type = "setup_tf_tree_node" />  
+
+</launch>

@@ -11,10 +11,12 @@ find_package(catkin REQUIRED COMPONENTS
   map_msgs
   nav_msgs
   roscpp
+  costmap_2d
   std_msgs
   actionlib
   message_generation
   geometry_msgs
+  tf2_geometry_msgs
 )
 
 

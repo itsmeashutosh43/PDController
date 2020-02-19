@@ -1,0 +1,26 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/paaila/paaila/workspaces/simulation/devel/include/**",
+                "/opt/ros/melodic/include/**",
+                "/home/paaila/paaila/workspaces/simulation/src/ferry/navigation-management/obstacle_detector/include/**",
+                "/home/paaila/paaila/workspaces/simulation/src/robot/openslam_gmapping/include/**",
+                "/home/paaila/paaila/workspaces/simulation/src/pd_controller/include/**",
+                "/home/paaila/paaila/workspaces/simulation/src/navigation_layers/range_sensor_layer/include/**",
+                "/home/paaila/paaila/workspaces/simulation/src/navigation_layers/social_navigation_layers/include/**",
+                "/usr/include/**"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

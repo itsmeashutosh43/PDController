@@ -1,0 +1,8 @@
+# define the goal
+geometry_msgs/PoseStamped position
+---
+# DEFINE THE RESULT
+bool RESULT
+---
+#feedback 
+geometry_msgs/PoseStamped position

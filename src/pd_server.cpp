@@ -48,15 +48,12 @@ class ControllerServer{
     controller_costmap_ros_(NULL),
     tf_(tf)
     {
-
-
-
         controller_costmap_ros_ = new costmap_2d::Costmap2DROS("local_costmap", tf_);
         controller_costmap_ros_->start();
        
         odom_callback = nh_.subscribe("/odom",1,&ControllerServer::odomCallback,this);
         vel_publisher = nh_.advertise<geometry_msgs::Twist>("/cmd_vel_mux/input/navi", 10);
-        find_obstacle = bresenham2D();
+        find_obstacle = bresenham2D(controller_costmap_ros_);
         
         as_.start();
     }
@@ -86,14 +83,25 @@ class ControllerServer{
 
         geometry_msgs::PoseStamped pose = goal->position;
 
+
+        ROS_INFO("Got goal here");
+
         
 
 
         while (true){
 
+            controller_costmap_ros_->updateMap();
+
+
+            
             if (find_obstacle.check_robot_path(pose.pose.position.x, pose.pose.position.y)){
                 ros::Duration(1).sleep();
+                //ROS_INFO("Somethings in the path");
                 continue;}
+            
+
+            
 
         
                 

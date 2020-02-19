@@ -1,16 +1,26 @@
 
 #include "bresenham2D.h"
+#include "costmap_2d/costmap_2d_ros.h"
 
-bresenham2D::bresenham2D()
+bresenham2D::bresenham2D(costmap_2d::Costmap2DROS *controller_costmap_ros_)
 {    
   refresh_data();
   costmap_subscriber = nh_.subscribe("/pd_server/local_costmap/costmap",1,&bresenham2D::costmapCallback,this);  
   amcl_pose = nh_.subscribe("/amcl_pose", 1 , &bresenham2D::amcl_callback, this);
-  footprint = nh_.subscribe("/pd_server/local_costmap/footprint", 1 ,&bresenham2D::footprintCallback,this);
+
+  
+
+  controller_costmap_ros_ = controller_costmap_ros_;
+}
+
+bresenham2D::bresenham2D()
+{
+
 }
 
 void bresenham2D::amcl_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr pose)
 {
+    ROS_INFO("Got amcl message");
     curr_pose_x = pose->pose.pose.position.x;
     curr_pose_y = pose->pose.pose.position.y;
 
@@ -22,7 +32,14 @@ bool bresenham2D::check_robot_path(double goalX, double goalY)
     true: there's an obstacle or cannot be sent
 
     */
-    if ((!costmap_) || (!footprint_)){return true;}
+    //footprintCallback();
+
+    if ((!costmap_) ){
+        ROS_INFO("Either there's no footprint or costmap here!");
+        return true;}
+
+
+    
     
     find_line(curr_pose_x,curr_pose_y,goalX,goalY);
 
@@ -45,18 +62,20 @@ void bresenham2D::find_line(double x1, double y1, double x2, double y2)
     double x = x1;
     double y = y1;
 
+    
+
     while (x <= x2){
-        if (kill){ return; };
+        
             
         put_point(x , y);
 
-        x += resolution;
+        x += *resolution;
 
         if (P < 0){ P = P +2 * dy;}
 
         else{
             P = P +2 * dy - 2*dx;
-            y += resolution;
+            y += *resolution;
         }
     }
 }
@@ -64,8 +83,8 @@ void bresenham2D::find_line(double x1, double y1, double x2, double y2)
 void bresenham2D::put_point(double x ,double y)
 {
 
-    int columns = (x- originX)/resolution;
-    int rows = (y- originY)/resolution;
+    int columns = (x- *originX)/ *resolution;
+    int rows = (y- *originY)/ *resolution;
 
     int index = rows * width + columns;
 
@@ -74,27 +93,26 @@ void bresenham2D::put_point(double x ,double y)
             
          data[index] = 100;
      }
-    else{
-        kill = true;
-    }
+    
 
 }
 
 void bresenham2D::refresh_data()
 {
-    for (auto i = 0 ; i< (height*width) ; i++)
+    for (auto i = 0 ; i< (80 * 80) ; i++)
     {
         data[i] = 0;
     }
 }
 
 
-void bresenham2D::footprintCallback(geometry_msgs::PolygonStampedConstPtr footprint)
+void bresenham2D::footprintCallback()
 {
+    std::vector<geometry_msgs::Point> footprint = controller_costmap_ros_->getRobotFootprint();
 
-        //refresh_data();
-        
-    for (auto i = footprint->polygon.points.begin(); i< footprint->polygon.points.end(); i++)
+    ROS_INFO ("got footprint");
+
+    for (auto i = footprint.begin(); i< footprint.end(); i++)
     {
         for (int k = 0 ; k<= 10 ; k ++)
         {find_line((i)->x - 5 + k, i->y - 5 + k , goalX + i->x - 5 + k , goalY + i->y - 5 + k);}
@@ -122,10 +140,18 @@ void bresenham2D::costmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& costm
 {
     height = costmap->info.height;
     width = costmap->info.width;
-    resolution = costmap->info.resolution;
-    originX = costmap->info.origin.position.x;
-    originY = costmap->info.origin.position.y;
-    costmap_ = true;
+    resolution_ = costmap->info.resolution;
+    
+    originX_ = costmap->info.origin.position.x;
+    
+    originY_ = costmap->info.origin.position.y;
+    
+    value = true;
+
+    ROS_INFO("%f %f %f", *resolution, *originX, *originY);
+
+
+    ROS_INFO("Got costmap here");
 
         
 

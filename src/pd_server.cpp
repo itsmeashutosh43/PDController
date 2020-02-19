@@ -39,36 +39,11 @@ class ControllerServer{
        
         odom_callback = nh_.subscribe("/odom",1,&ControllerServer::odomCallback,this);
         vel_publisher = nh_.advertise<geometry_msgs::Twist>("/cmd_vel_mux/input/navi", 10);
-        laser_callback = nh_.subscribe("/scan",1, &ControllerServer::laser_msg_Callback,this);
         
         as_.start();
     }
 
 
-    void laser_msg_Callback(const sensor_msgs::LaserScan::ConstPtr& scan)
-    {
-        //you can get readings with scan->ranges[]
-        int mid = scan->angle_max/scan->angle_increment;
-        
-        double mid_scan = scan->ranges[mid];
-
-        double mid_scan_m10 = scan->ranges[mid-20];
-
-        double mid_scan_p10 = scan->ranges[mid+20];
-
-        if ((mid_scan_p10 <= 1.5) ||(mid_scan <= 1.5)||(mid_scan_m10 <= 1.5) )
-        {
-            interrupt = true;
-            ROS_INFO("Approaching obstacle, turn away");
-            sendZeroVel();
-            
-        }
-
-        interrupt = false;
-
-        ros::Duration(1).sleep();
-
-    }
 
     void sendZeroVel()
     {

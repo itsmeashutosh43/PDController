@@ -1,39 +1,15 @@
-#include <ros/ros.h>
-#include <nav_msgs/OccupancyGrid.h>
-#include <geometry_msgs/PolygonStamped.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-class bresenham2D
-{
-    
-    ros::Subscriber costmap_subscriber, footprint , amcl_pose;
-    ros::NodeHandle nh_;
-    int height;
-    bool costmap_ = false;
-    int width;
-    double resolution;
-    int8_t data[64000];
-    int8_t costmap_data[64000];
-    double originX;
-    double originY;
-    double goalX = 15;
-    double goalY = 2;
-    double curr_pose_x;
-    double curr_pose_y;
-    bool kill =false;
 
-    public:
-    bresenham2D()
-    {
+#include "bresenham2D.h"
 
-    
-       refresh_data();
-      
+    bresenham2D::bresenham2D()
+    {    
+      refresh_data();
       costmap_subscriber = nh_.subscribe("/move_base/local_costmap/costmap",1,&bresenham2D::costmapCallback,this);  
       amcl_pose = nh_.subscribe("/amcl_pose", 1 , &bresenham2D::amcl_callback, this);
       footprint = nh_.subscribe("/move_base/local_costmap/footprint", 1 ,&bresenham2D::footprintCallback,this);
     }
 
-    void amcl_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr pose)
+    void bresenham2D::amcl_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr pose)
     {
         curr_pose_x = pose->pose.pose.position.x;
         curr_pose_y = pose->pose.pose.position.y;
@@ -42,7 +18,7 @@ class bresenham2D
 
     }
 
-    void find_line(double x1, double y1, double x2, double y2)
+    void bresenham2D::find_line(double x1, double y1, double x2, double y2)
     {
         double dx = x2 - x1;
         double dy = y2-y1;
@@ -67,7 +43,7 @@ class bresenham2D
         }
     }
 
-    void put_point(double x ,double y)
+    void bresenham2D::put_point(double x ,double y)
     {
 
         int columns = (x- originX)/resolution;
@@ -86,7 +62,7 @@ class bresenham2D
 
     }
 
-    void refresh_data()
+    void bresenham2D::refresh_data()
     {
         for (auto i = 0 ; i< (height*width) ; i++)
         {
@@ -95,7 +71,7 @@ class bresenham2D
     }
 
 
-    void footprintCallback(geometry_msgs::PolygonStampedConstPtr footprint)
+    void bresenham2D::footprintCallback(geometry_msgs::PolygonStampedConstPtr footprint)
     {
 
         //refresh_data();
@@ -111,7 +87,7 @@ class bresenham2D
         dot_product();
     }
 
-    void dot_product()
+    void bresenham2D::dot_product()
     {
         double c = 0;
         for (auto i = 0; i< (width*height); i++)
@@ -123,7 +99,7 @@ class bresenham2D
     }
 
 
-    void costmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& costmap )
+    void bresenham2D::costmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& costmap )
     {
         height = costmap->info.height;
         width = costmap->info.width;

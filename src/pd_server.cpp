@@ -13,7 +13,7 @@
 #include <tf/transform_listener.h>
 #include <sensor_msgs/LaserScan.h>
 #include <algorithm>
-
+#include "bresenham2D.h"
 
 class ControllerServer{
     protected:
@@ -29,6 +29,7 @@ class ControllerServer{
     geometry_msgs::Twist vel_msg;
     nav_msgs::Odometry curr_pose;
     bool success = false;
+    bresenham2D find_obstacle;
 
 
     public:
@@ -39,6 +40,7 @@ class ControllerServer{
        
         odom_callback = nh_.subscribe("/odom",1,&ControllerServer::odomCallback,this);
         vel_publisher = nh_.advertise<geometry_msgs::Twist>("/cmd_vel_mux/input/navi", 10);
+        find_obstacle = bresenham2D();
         
         as_.start();
     }
@@ -71,7 +73,7 @@ class ControllerServer{
 
         while (true){
 
-            if (interrupt){
+            if (find_obstacle.check_robot_path(pose.pose.position.x, pose.pose.position.y)){
                 ros::Duration(1).sleep();
                 continue;}
 

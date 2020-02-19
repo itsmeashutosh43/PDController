@@ -10,6 +10,7 @@ class bresenham2D{
     ros::NodeHandle nh_;
     int height;
     bool costmap_ = false;
+    bool footprint_ = false;
     int width;
     double resolution;
     int8_t data[64000];
@@ -29,6 +30,7 @@ class bresenham2D{
     void put_point(double x ,double y);
     void refresh_data();
     void footprintCallback(geometry_msgs::PolygonStampedConstPtr footprint);
-    void dot_product();
+    bool dot_product();
     void costmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& costmap );
+    bool check_robot_path(double goalX, double goalY);
 };

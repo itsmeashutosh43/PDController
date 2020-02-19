@@ -56,7 +56,7 @@ class PD_controller
 
        ROS_INFO("Waiting for everything to go up");
        ros::Duration(1).sleep();
-        get_intermediate_goal();
+       get_intermediate_goal();
         
     }
 

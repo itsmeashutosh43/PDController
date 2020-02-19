@@ -229,15 +229,11 @@ target_link_libraries(
 )
 
 
-add_executable(pd_server src/pd_server.cpp  src/pid_implementation.cpp)
+add_executable(pd_server src/pd_server.cpp  src/pid_implementation.cpp src/bresenham2D.h src/bresenham2D.cpp)
 
 target_link_libraries(
   pd_server
   ${catkin_LIBRARIES}
 )
 
-add_executable( bresenham2D src/bresenham2D.cpp)
-target_link_libraries(
-  bresenham2D
-  ${catkin_LIBRARIES}
-)
+

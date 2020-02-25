@@ -1,4 +1,4 @@
- #include<ros/ros.h>
+#include<ros/ros.h>
 #include<actionlib/server/simple_action_server.h>
 #include <math.h>
 #include <pd_controller/pdAction.h>
@@ -19,7 +19,7 @@
 
 class ControllerServer{
     protected:
-    
+
     ros::NodeHandle nh_;
     bool interrupt = false;
     bool getting_goal = false;
@@ -32,15 +32,11 @@ class ControllerServer{
     geometry_msgs::Twist vel_msg;
     nav_msgs::Odometry curr_pose;
     bool success = false;
-    bresenham2D find_obstacle;
+    bresenham2D* find_obstacle;
     costmap_2d::Costmap2DROS* costmap2d;
     costmap_2d::Costmap2DROS *controller_costmap_ros_;
-    
     tf2_ros::Buffer& tf_;
-    
-    
-
-
+   
     public:
     ControllerServer(std::string name , tf2_ros::Buffer& tf):
     as_(nh_, name, boost::bind(&ControllerServer::executeCB, this, _1),false),
@@ -53,7 +49,7 @@ class ControllerServer{
        
         odom_callback = nh_.subscribe("/odom",1,&ControllerServer::odomCallback,this);
         vel_publisher = nh_.advertise<geometry_msgs::Twist>("/cmd_vel_mux/input/navi", 10);
-        find_obstacle = bresenham2D(controller_costmap_ros_);
+        find_obstacle = new bresenham2D();
         
         as_.start();
     }
@@ -87,17 +83,14 @@ class ControllerServer{
         ROS_INFO("Got goal here");
 
         
-
-
         while (true){
 
             controller_costmap_ros_->updateMap();
 
-
-            
-            if (find_obstacle.check_robot_path(pose.pose.position.x, pose.pose.position.y)){
-                ros::Duration(1).sleep();
-                //ROS_INFO("Somethings in the path");
+            bool a = find_obstacle->check_robot_path(pose.pose.position.x, pose.pose.position.y);
+            if (a){
+                ros::Duration(2).sleep();
+                sendZeroVel();
                 continue;}
             
 
@@ -130,7 +123,7 @@ class ControllerServer{
             geometry_msgs::Twist command = geometry_msgs::Twist();
             command.angular.z = desired_rotate;
 
-            if (pose.pose.position.x > 0){command.linear.x = 0.25;}
+            if (pose.pose.position.x > 0){command.linear.x = 0.15;}
             else{command.linear.x = -0.25;}
 
 
@@ -139,7 +132,7 @@ class ControllerServer{
             
 
             vel_publisher.publish(command);
-            ros::Duration(1).sleep();
+            ros::Duration(0.5).sleep();
 
             ROS_INFO("%f" , abs(distance_error));
 
@@ -151,7 +144,7 @@ class ControllerServer{
                 break;                
             }
         }   
-
+        
 
         if(success)
         {

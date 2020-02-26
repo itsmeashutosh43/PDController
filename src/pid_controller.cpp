@@ -73,7 +73,7 @@ class PD_controller
         geometry_msgs::PoseStamped goal_;
         
         goal_.pose.orientation.w = 1;
-        goal_.pose.position.x = 8;
+        goal_.pose.position.x = 2;
         goal_.pose.position.y = 2;
 
         goal.position = goal_;

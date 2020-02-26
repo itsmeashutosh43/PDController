@@ -33,6 +33,17 @@ double PD::calculate( double error )
     // Total output
     double output = Pout;
 
+
+    if ((output > 0.3))
+    {
+        output = 0.2;
+    }
+
+    else if((output < 0) && (output < -0.3))
+    {
+        output = -0.2;
+    }
+
     // Save error to previous error
     _pre_error = error;
 

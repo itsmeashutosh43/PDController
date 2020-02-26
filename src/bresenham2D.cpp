@@ -1,5 +1,3 @@
-
-
 #include "bresenham2D.h"
 #include "costmap_2d/costmap_2d_ros.h"
 #include <random>
@@ -87,11 +85,7 @@ bool bresenham2D::check_robot_path(double goalX, double goalY)
         return true;
     }
 
-    
-    
     //points_inside_ellipse(curr_pose_x, curr_pose_y);
-
-    
 
     return false;
 
@@ -138,9 +132,6 @@ void bresenham2D::points_inside_ellipse( double x_0 , double y_0)
     std::mt19937 rng(dev());
     std::uniform_real_distribution<> rho(0 , 1);
     std::uniform_real_distribution<> phi(0 , PI);
-
-    
-
 
     for (int  i = 0 ; i < 1000 ; i++)
     {

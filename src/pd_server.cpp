@@ -16,11 +16,13 @@
 #include "bresenham2D.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "costmap_2d/costmap_2d_ros.h"
+#include "velocity_smoother.h"
 
 class ControllerServer{
     protected:
 
     ros::NodeHandle nh_;
+    VelocitySmoother vs;
     bool interrupt = false;
     bool getting_goal = false;
     actionlib::SimpleActionServer<pd_controller::pdAction> as_;
@@ -42,8 +44,11 @@ class ControllerServer{
     as_(nh_, name, boost::bind(&ControllerServer::executeCB, this, _1),false),
     action_name(name),
     controller_costmap_ros_(NULL),
-    tf_(tf)
+    tf_(tf),
+    vs(0.0, 0.0, 0.0)
     {
+
+        vs = VelocitySmoother(0.4 , 0.25 , 0.4);
         controller_costmap_ros_ = new costmap_2d::Costmap2DROS("local_costmap", tf_);
         controller_costmap_ros_->start();
        
@@ -92,16 +97,26 @@ class ControllerServer{
                 ros::Duration(2).sleep();
                 sendZeroVel();
                 continue;}
-            
 
-            
 
-        
-                
-            float desired_phi = atan((pose.pose.position.y - curr_pose.pose.pose.position.y)/
+            float desired_phi;            
+
+
+            if (pose.pose.position.x < 0)
+            {    
+            desired_phi = 3.1415 +  atan((pose.pose.position.y - curr_pose.pose.pose.position.y)/
                                 (pose.pose.position.x - curr_pose.pose.pose.position.x));
+            }
+
+            else{
+            desired_phi =atan((pose.pose.position.y - curr_pose.pose.pose.position.y)/
+                                (pose.pose.position.x - curr_pose.pose.pose.position.x));
+                                
+            }
 
 
+            
+            
             tf2::Quaternion q(
             curr_pose.pose.pose.orientation.x,
             curr_pose.pose.pose.orientation.y,
@@ -112,19 +127,32 @@ class ControllerServer{
             double roll, pitch, yaw;
             
             m.getRPY(roll, pitch, yaw);
+
+
+            ROS_INFO("yaw is %f",yaw);
+
+            
             
             double e = desired_phi - yaw;
             double e_ = atan2(sin(e),cos(e));
 
-            PD pid = PD(0, 1.5, 0 ,0);
+            ROS_INFO("error is %f" , e_);
+            
+
+            PD pid = PD(0, 3, 0 ,0);
+
 
             double desired_rotate = pid.calculate(e_);
+
+            //ROS_INFO("desired_rotate %f", desired_rotate);
+            //continue;    
+
+            double forward_vel = vs.smooth_velocity(e_);
 
             geometry_msgs::Twist command = geometry_msgs::Twist();
             command.angular.z = desired_rotate;
 
-            if (pose.pose.position.x > 0){command.linear.x = 0.15;}
-            else{command.linear.x = -0.25;}
+            command.linear.x = forward_vel;
 
 
             float distance_error = sqrt(pow((pose.pose.position.y - curr_pose.pose.pose.position.y),2) +

@@ -18,6 +18,14 @@
 #include "costmap_2d/costmap_2d_ros.h"
 #include "velocity_smoother.h"
 
+
+/*
+
+
+Actionlib server is implemented here.
+This class/ node is comparable to move_base node.
+*/
+
 class ControllerServer{
     protected:
 
@@ -83,10 +91,6 @@ class ControllerServer{
     {   
 
         geometry_msgs::PoseStamped pose = goal->position;
-
-
-        ROS_INFO("Got goal here");
-
         
         while (true){
 
@@ -94,6 +98,8 @@ class ControllerServer{
 
             bool a = find_obstacle->check_robot_path(pose.pose.position.x, pose.pose.position.y);
             if (a){
+
+                ROS_WARN("Detected something in robot's path, please confirm. Sleeping for 2 secs.");
                 ros::Duration(2).sleep();
                 sendZeroVel();
                 continue;}
@@ -128,24 +134,13 @@ class ControllerServer{
             
             m.getRPY(roll, pitch, yaw);
 
-
-            ROS_INFO("yaw is %f",yaw);
-
-            
-            
             double e = desired_phi - yaw;
             double e_ = atan2(sin(e),cos(e));
-
-            ROS_INFO("error is %f" , e_);
-            
 
             PD pid = PD(0, 3, 0 ,0);
 
 
             double desired_rotate = pid.calculate(e_);
-
-            //ROS_INFO("desired_rotate %f", desired_rotate);
-            //continue;    
 
             double forward_vel = vs.smooth_velocity(e_);
 
@@ -161,8 +156,6 @@ class ControllerServer{
 
             vel_publisher.publish(command);
             ros::Duration(0.5).sleep();
-
-            ROS_INFO("%f" , abs(distance_error));
 
             if (distance_error < 0.5)
             {

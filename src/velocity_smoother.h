@@ -1,10 +1,16 @@
 #include <math.h>
 #include<ros/ros.h>
 
+/*
+Class to smooth the input x velocity. The velocity 
+decays as a function of angle error with the target goal
+*/
+
 
 class VelocitySmoother{
 
     public:
+
 
     VelocitySmoother(double maximum_vel , double error_tolerance, double k){
 
@@ -22,10 +28,6 @@ class VelocitySmoother{
         {
             return 0;
         }
-
-
-        //return (0.4*np.exp(0.4*(-x+25)))/(1+ np.exp(0.4*(-x+25)))
-
         return (maximum_vel * std::exp(k * (-error + error_tolerance))/(1 + std::exp(k * (-error + error_tolerance)))); 
     }
 

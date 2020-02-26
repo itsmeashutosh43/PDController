@@ -31,28 +31,7 @@ class PD_controller
         ROS_INFO("%s Waiting For Server...", name.c_str());
         ac.waitForServer();
         ROS_INFO("Got a server ...");
-        
-        /*
-        
-        sharedEdge = ros::topic::waitForMessage<nav_msgs::Path>("/move_base/GlobalPlanner/plan");
-        bool got_plan = false;
-        if (sharedEdge != NULL)
-        {
-            ROS_INFO("Initial Plan recorded");
-            init_global_plan = *sharedEdge;
-            got_plan = true;
-            
-        }
-    
 
-        
-
-        while (!got_plan)
-        {
-            ROS_INFO("Not got a plan yet");
-            ros::Duration(2).sleep();
-        }
-        */
 
        ROS_INFO("Waiting for everything to go up");
        ros::Duration(1).sleep();
@@ -63,8 +42,7 @@ class PD_controller
     
     void doneCb(const actionlib::SimpleClientGoalState& state,
         const pd_controller::pdResultConstPtr& result){
-        //ROS_INFO("Finished in state [%s]", state.toString().c_str());
-        //ROS_INFO("Result: %i", result->ok);
+        
     };
 
     void get_intermediate_goal()

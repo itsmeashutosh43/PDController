@@ -1,3 +1,9 @@
+/*
+Detects the possible obstacle and notifies pid_controller in case of any
+*/
+
+
+
 #include "bresenham2D.h"
 #include "costmap_2d/costmap_2d_ros.h"
 #include <random>
@@ -58,16 +64,6 @@ void bresenham2D::amcl_callback(const geometry_msgs::PoseWithCovarianceStampedCo
 
 bool bresenham2D::check_robot_path(double goalX, double goalY)
 {
-    /*
-    true: there's an obstacle or cannot be sent
-
-    */
-    //footprintCallback();
-
-     	
-    // Create a thread using member function
-    //std::thread th(&Task::execute, taskPtr, "Sample Task");
-
 
     if ((!(*costmap_)) ){
         ROS_INFO("Either there's no footprint or costmap here!");
@@ -77,11 +73,8 @@ bool bresenham2D::check_robot_path(double goalX, double goalY)
     std::thread t1(&bresenham2D::compute, this, &sem) ;
     t1.join();
 
-
-    ROS_ERROR("sem is %d", sem);
     if (sem == 1)
     {
-        ROS_ERROR("bad path");
         return true;
     }
 

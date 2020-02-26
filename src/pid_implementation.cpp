@@ -1,9 +1,19 @@
+/*
+
+Implementation of PID Controller.
+
+*/
+
+
+
 
 #include <iostream>
 #include <cmath>
 #include "pid_implementation.h"
 
 using namespace std;
+
+
 
 PD::PD( double dt, double Kp, double Kd, double Ki )
 {

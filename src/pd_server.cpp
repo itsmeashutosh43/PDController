@@ -21,7 +21,6 @@
 
 /*
 
-
 Actionlib server is implemented here.
 This class/ node is comparable to move_base node.
 */
@@ -31,7 +30,6 @@ class ControllerServer{
 
     ros::NodeHandle nh_;
     VelocitySmoother vs;
-    bool interrupt = false;
     bool getting_goal = false;
     actionlib::SimpleActionServer<pd_controller::pdAction> as_;
     pd_controller::pdResult result_;
@@ -82,7 +80,6 @@ class ControllerServer{
         curr_pose = pose;
     }
 
-
     ~ControllerServer(void)
     {
     }
@@ -91,6 +88,9 @@ class ControllerServer{
     {   
 
         geometry_msgs::PoseStamped pose = goal->position;
+
+
+        ROS_INFO("got goal for %f and %f", pose.pose.position.x, pose.pose.position.y);
         
         while (true){
 
@@ -108,7 +108,7 @@ class ControllerServer{
             float desired_phi;            
 
 
-            if (pose.pose.position.x < 0)
+            if (pose.pose.position.x <= 0)
             {    
             desired_phi = 3.1415 +  atan((pose.pose.position.y - curr_pose.pose.pose.position.y)/
                                 (pose.pose.position.x - curr_pose.pose.pose.position.x));
@@ -119,6 +119,7 @@ class ControllerServer{
                                 (pose.pose.position.x - curr_pose.pose.pose.position.x));
                                 
             }
+
 
 
             
@@ -133,13 +134,11 @@ class ControllerServer{
             double roll, pitch, yaw;
             
             m.getRPY(roll, pitch, yaw);
-
+            
             double e = desired_phi - yaw;
             double e_ = atan2(sin(e),cos(e));
 
             PD pid = PD(0, 3, 0 ,0);
-
-
             double desired_rotate = pid.calculate(e_);
 
             double forward_vel = vs.smooth_velocity(e_);
@@ -153,7 +152,6 @@ class ControllerServer{
             float distance_error = sqrt(pow((pose.pose.position.y - curr_pose.pose.pose.position.y),2) +
                                     pow((pose.pose.position.x - curr_pose.pose.pose.position.x),2));
             
-
             vel_publisher.publish(command);
             ros::Duration(0.5).sleep();
 
@@ -162,19 +160,10 @@ class ControllerServer{
                 sendZeroVel();
                 ROS_INFO("Close enough to goal, you may stop");
                 success = true;
+                as_.setSucceeded(result_);
                 break;                
             }
-        }   
-        
-
-        if(success)
-        {
-                
-                // set the action state to succeeded
-                as_.setSucceeded(result_);
-        }
-
-        
+        }           
     }
 
 };

@@ -5,6 +5,9 @@
 #include<iostream>
 #include "geometry_msgs/Pose.h"
 
+#include "pd_controller/coordinate.h"
+#include "pd_controller/goal.h"
+
 /*
 
 Client side for pd controller
@@ -24,9 +27,16 @@ typedef actionlib::SimpleActionClient<pdAction> Client;
 class PD_controller
 {
     public:
+
+
+
+
     PD_controller(std::string name):ac(name, true)
     {
-        boost::shared_ptr<nav_msgs::Path const> sharedEdge;
+        
+        //goal = n.subscribe("move_base/goal",1,&Eval::goalCallback,this);
+
+        pb = nh.subscribe("/given_goal", 1 , &PD_controller::goalCallback,this);
 
         ROS_INFO("%s Waiting For Server...", name.c_str());
         ac.waitForServer();
@@ -35,8 +45,19 @@ class PD_controller
 
        ROS_INFO("Waiting for everything to go up");
        ros::Duration(1).sleep();
-       get_intermediate_goal();
+       //get_intermediate_goal();
         
+    }
+
+
+    void goalCallback(const pd_controller::goal goal)
+    {
+        double x = goal.goal.x;
+        double y = goal.goal.y;
+
+
+        ROS_INFO("Got goals for coordinate %f and %f",x,y);    
+        get_intermediate_goal(x,y);
     }
 
     
@@ -45,14 +66,14 @@ class PD_controller
         
     };
 
-    void get_intermediate_goal()
+    void get_intermediate_goal(double x, double y)
     {
         
         geometry_msgs::PoseStamped goal_;
         
         goal_.pose.orientation.w = 1;
-        goal_.pose.position.x = 2;
-        goal_.pose.position.y = 2;
+        goal_.pose.position.x = x;
+        goal_.pose.position.y = y;
 
         goal.position = goal_;
         
@@ -62,6 +83,9 @@ class PD_controller
     }
 
     private:
+
+    ros::NodeHandle nh;
+    ros::Subscriber pb;
     nav_msgs::Path init_global_plan;
     Client ac;
     pd_controller::pdGoal goal;
@@ -71,7 +95,7 @@ class PD_controller
 
 int main (int argc, char** argv){
     ros::init(argc,argv,"PD_controller");
-    ros::NodeHandle nh;
+    
     ros::Subscriber goal;
     std::string filename;
     ROS_INFO("Started now ");

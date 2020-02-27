@@ -5,8 +5,6 @@ Implementation of PID Controller.
 */
 
 
-
-
 #include <iostream>
 #include <cmath>
 #include "pid_implementation.h"

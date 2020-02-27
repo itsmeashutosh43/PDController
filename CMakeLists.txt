@@ -63,6 +63,8 @@ add_message_files(
    FILES
    prob.msg
    ray.msg
+   coordinate.msg
+   goal.msg
  )
 
 ## Generate services in the 'srv' folder

@@ -1,5 +1,5 @@
 /*
-Detects the possible obstacle and notifies pid_controller in case of any
+Detects the possible obstacle and notifies pid_controller class in case of any.
 */
 
 
@@ -30,7 +30,6 @@ int bresenham2D::compute(int *x)
 
     if (dot_product())
     {
-        ROS_ERROR("I amhere. dot product grteater than one");
         *x = 1;
         //refresh_data();
         m.unlock();
@@ -186,7 +185,6 @@ void bresenham2D::put_point(double x ,double y)
 
 void bresenham2D::refresh_data()
 {
-    pd_controller::ray rays = pd_controller::ray();
     for (auto i = 0 ; i< (80 * 80) ; i++)
     {
                                                                                                                                                                                                                                              
@@ -231,12 +229,9 @@ void bresenham2D::costmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& costm
             prev = ros::Time::now().toSec();
         }
 
-        ROS_INFO("Unsuccesful duration %f", (ros::Time::now().toSec() - prev ) );
-
         (*costmap_count_)+=1;
 
         if (true){
-            ROS_INFO("Got costmap");
             height = costmap->info.height;
             width = costmap->info.width;
             resolution_ = costmap->info.resolution;
@@ -255,11 +250,6 @@ void bresenham2D::costmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& costm
                 costmap_data[i] = costmap->data[i];
                     //ROS_INFO("%d", i);
 
-                if (costmap->data[i] > 50){
-                        //ROS_INFO("obstacle at %d", i);
-                    //    //print_corresponding_coordinates(i);
-                    //}
-                }
             }
 
         }
@@ -271,7 +261,6 @@ void bresenham2D::costmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& costm
             ROS_ERROR("lock not recieved");
         }
 
-    //ROS_INFO("costmap origin x and y %f %f  ", *originX , *originY);
         
 
 }

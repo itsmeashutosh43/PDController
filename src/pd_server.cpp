@@ -54,7 +54,7 @@ class ControllerServer{
     vs(0.0, 0.0, 0.0)
     {
 
-        vs = VelocitySmoother(0.4 , 0.25 , 0.4);
+        vs = VelocitySmoother(0.2 , 25 , 0.4);
         controller_costmap_ros_ = new costmap_2d::Costmap2DROS("local_costmap", tf_);
         controller_costmap_ros_->start();
        
@@ -130,8 +130,6 @@ class ControllerServer{
 
             
             m.getRPY(roll, pitch, yaw);
-
-            ROS_INFO("yaw is %f", yaw);
 
             double e = desired_phi - yaw;
             double e_ = atan2(sin(e),cos(e));

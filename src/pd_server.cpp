@@ -98,47 +98,45 @@ class ControllerServer{
 
             bool a = find_obstacle->check_robot_path(pose.pose.position.x, pose.pose.position.y);
             if (a){
-
-                ROS_WARN("Detected something in robot's path, please confirm. Sleeping for 2 secs.");
-                ros::Duration(2).sleep();
                 sendZeroVel();
+                ROS_WARN("Detected something in robot's path, please confirm. Sleeping for 2 secs.");
+                ros::Duration(3).sleep();
+                
                 continue;}
 
 
             float desired_phi;            
 
 
-            if (pose.pose.position.x <= 0)
+            if (true)
             {    
-            desired_phi = 3.1415 +  atan((pose.pose.position.y - curr_pose.pose.pose.position.y)/
+            desired_phi =  atan2((pose.pose.position.y - curr_pose.pose.pose.position.y),
                                 (pose.pose.position.x - curr_pose.pose.pose.position.x));
             }
 
             else{
-            desired_phi =atan((pose.pose.position.y - curr_pose.pose.pose.position.y)/
+            desired_phi =atan2((pose.pose.position.y - curr_pose.pose.pose.position.y),
                                 (pose.pose.position.x - curr_pose.pose.pose.position.x));
                                 
             }
 
-
-
-            
-            
             tf2::Quaternion q(
             curr_pose.pose.pose.orientation.x,
             curr_pose.pose.pose.orientation.y,
             curr_pose.pose.pose.orientation.z,
-            curr_pose.pose.pose.orientation.w);
-            
+            curr_pose.pose.pose.orientation.w);            
             tf2::Matrix3x3 m(q);
             double roll, pitch, yaw;
+
             
             m.getRPY(roll, pitch, yaw);
-            
+
+            ROS_INFO("yaw is %f", yaw);
+
             double e = desired_phi - yaw;
             double e_ = atan2(sin(e),cos(e));
 
-            PD pid = PD(0, 3, 0 ,0);
+            PD pid = PD(0.1, 3, 0.05 ,0);
             double desired_rotate = pid.calculate(e_);
 
             double forward_vel = vs.smooth_velocity(e_);

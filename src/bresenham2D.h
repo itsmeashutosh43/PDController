@@ -35,7 +35,7 @@ class bresenham2D{
     int8_t data[64000];
     int8_t costmap_data[64000];
 
-    double resolution_;
+    double resolution_ = 0.025;
     double *resolution = &(resolution_);
 
     int sem;
@@ -59,14 +59,14 @@ class bresenham2D{
     bresenham2D();
     int compute(int *x);
     void print_corresponding_coordinates(int x);
-    void test(double goalX, double goalY);
     void amcl_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr pose);
-    void find_line(double x1, double y1, double x2, double y2);
-    void put_point(double x ,double y);
+    //void find_line(double x1, double y1, double x2, double y2);
+    //void put_point(double x ,double y);
     void refresh_data();
+    void put_points(double x, double y);
    
     bool dot_product();
-    void points_inside_ellipse(double x , double y);
+    //void points_inside_ellipse(double x , double y);
     void costmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& costmap );
     bool check_robot_path(double goalX, double goalY);
 };

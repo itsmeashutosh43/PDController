@@ -13,7 +13,10 @@ Detects the possible obstacle and notifies pid_controller class in case of any.
 
 bresenham2D::bresenham2D()
 {    
+
+  ROS_ERROR("bresenham started");
   refresh_data();
+  put_points(0.8,1.5);
   costmap_subscriber = nh_.subscribe("/move_base/local_costmap/costmap",1,&bresenham2D::costmapCallback,this);  
   amcl_pose = nh_.subscribe("/amcl_pose", 1 , &bresenham2D::amcl_callback, this);
 
@@ -23,20 +26,20 @@ bresenham2D::bresenham2D()
 int bresenham2D::compute(int *x)
 {
 
+    //if ((ros::Time::now().toSec() - prev) > 2)
+    //{
+    //    ROS_WARN("Costmap not updated for 2 sec!");
+    //}
     if (m.try_lock())
     {
-    
-    find_line(curr_pose_x,curr_pose_y,goalX,goalY);
-
+    //find_line(curr_pose_x,curr_pose_y,goalX,goalY);
     if (dot_product())
     {
         *x = 1;
         //refresh_data();
         m.unlock();
-        
         return 0;
     }
-
     
     }
 
@@ -77,18 +80,13 @@ bool bresenham2D::check_robot_path(double goalX, double goalY)
         return true;
     }
 
-    //points_inside_ellipse(curr_pose_x, curr_pose_y);
-
     return false;
 
 
 }
 
-void bresenham2D::test(double goalX, double goalY)
-{
-    find_line(curr_pose_x,curr_pose_y,goalX,goalY);
-}
 
+/*
 void bresenham2D::find_line(double x1, double y1, double x2, double y2)
 {
     double dx = x2 - x1;
@@ -139,11 +137,8 @@ void bresenham2D::points_inside_ellipse( double x_0 , double y_0)
     }
 
     *semaphore = true;
-
-
-
+ssss
 }
-
 
 
 void bresenham2D::put_point(double x ,double y)
@@ -180,6 +175,38 @@ void bresenham2D::put_point(double x ,double y)
         kill = true;
     }
     
+
+}
+
+*/
+
+
+void bresenham2D::put_points(double c_width, double c_length)
+{
+
+    ROS_INFO("%f %f", c_width,c_length);
+
+    int iter_x = (int)(c_width / *resolution);
+    int iter_y = (int)(c_length/ *resolution);
+
+    ROS_INFO("%d %d", iter_x , iter_y);
+
+
+    int start_x = 40 - (iter_x);
+
+    int end_x = 40 + (iter_x);
+
+
+    for (auto rows = 40 ; rows <= 80 ; rows++)
+    {
+        for (auto columns = start_x; columns<= end_x ; columns++)
+        {
+            int index = rows * 80 + columns;
+            
+
+            data[index] = 100;
+        }
+    }
 
 }
 

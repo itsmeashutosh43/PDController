@@ -23,7 +23,8 @@ class VelocitySmoother{
         {
             return 0;
         }
-        return (maximum_vel * std::exp(k * (-error + error_tolerance))/(1 + std::exp(k * (-error + error_tolerance)))); 
+
+        return ( maximum_vel * std::exp(k * (-error + error_tolerance))/(1 + std::exp(k * (-error + error_tolerance)))); 
     }
 
 

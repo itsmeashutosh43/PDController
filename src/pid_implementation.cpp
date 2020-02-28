@@ -34,20 +34,20 @@ double PD::calculate( double error )
     _integral += error * _dt;
     double Iout = _Ki * _integral;
 
-    // Derivative portion
+    */
+
     double derivative = (error - _pre_error) / _dt;
     double Dout = _Kd * derivative;
-    */
     // Total output
-    double output = Pout;
+    double output = Pout + Dout;
 
 
-    if ((output > 0.3))
+    if ((output > 0.2))
     {
         output = 0.2;
     }
 
-    else if((output < 0) && (output < -0.3))
+    else if((output < 0) && (output < -0.2))
     {
         output = -0.2;
     }

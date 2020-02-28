@@ -42,21 +42,17 @@ class ControllerServer{
     bool success = false;
     bresenham2D* find_obstacle;
     costmap_2d::Costmap2DROS* costmap2d;
-    costmap_2d::Costmap2DROS *controller_costmap_ros_;
     tf2_ros::Buffer& tf_;
    
     public:
     ControllerServer(std::string name , tf2_ros::Buffer& tf):
     as_(nh_, name, boost::bind(&ControllerServer::executeCB, this, _1),false),
     action_name(name),
-    controller_costmap_ros_(NULL),
     tf_(tf),
     vs(0.0, 0.0, 0.0)
     {
 
         vs = VelocitySmoother(0.2 , 25 , 0.4);
-        controller_costmap_ros_ = new costmap_2d::Costmap2DROS("local_costmap", tf_);
-        controller_costmap_ros_->start();
        
         odom_callback = nh_.subscribe("/odom",1,&ControllerServer::odomCallback,this);
         vel_publisher = nh_.advertise<geometry_msgs::Twist>("/cmd_vel_mux/input/navi", 10);
@@ -94,7 +90,6 @@ class ControllerServer{
         
         while (true){
 
-            controller_costmap_ros_->updateMap();
 
             bool a = find_obstacle->check_robot_path(pose.pose.position.x, pose.pose.position.y);
             if (a){

@@ -35,10 +35,13 @@ class ControllerServer{
     pd_controller::pdResult result_;
     std::string action_name;
     ros::Publisher vel_publisher;
-    ros::Subscriber odom_callback , laser_callback;
+    ros::Subscriber odom_callback;
+    ros::Subscriber amcl_callback;
     double omega = 0.0;
     geometry_msgs::Twist vel_msg;
-    nav_msgs::Odometry curr_pose;
+    nav_msgs::Odometry curr_pose_;
+
+    geometry_msgs::PoseWithCovariance curr_pose;
     bool success = false;
     bresenham2D* find_obstacle;
     costmap_2d::Costmap2DROS* costmap2d;
@@ -53,10 +56,13 @@ class ControllerServer{
     {
 
         vs = VelocitySmoother(0.2 , 25 , 0.4);
+
+        ROS_INFO("here");
        
         odom_callback = nh_.subscribe("/odom",1,&ControllerServer::odomCallback,this);
+        amcl_callback = nh_.subscribe("/amcl_pose", 1 , &ControllerServer::amclCallBack, this);
         vel_publisher = nh_.advertise<geometry_msgs::Twist>("/cmd_vel_mux/input/navi", 10);
-        find_obstacle = new bresenham2D();
+        find_obstacle = new bresenham2D(0.4);
         
         as_.start();
     }
@@ -71,9 +77,14 @@ class ControllerServer{
         vel_publisher.publish(command);    
     }
 
+    void amclCallBack(geometry_msgs::PoseWithCovarianceStamped pose)
+    {
+        curr_pose = pose.pose;
+    }
+
     void odomCallback(nav_msgs::Odometry pose)
     {
-        curr_pose = pose;
+        curr_pose_ = pose;
     }
 
     ~ControllerServer(void)
@@ -91,6 +102,7 @@ class ControllerServer{
         while (true){
 
 
+
             bool a = find_obstacle->check_robot_path(pose.pose.position.x, pose.pose.position.y);
             if (a){
                 sendZeroVel();
@@ -102,24 +114,14 @@ class ControllerServer{
 
             float desired_phi;            
 
-
-            if (true)
-            {    
-            desired_phi =  atan2((pose.pose.position.y - curr_pose.pose.pose.position.y),
-                                (pose.pose.position.x - curr_pose.pose.pose.position.x));
-            }
-
-            else{
-            desired_phi =atan2((pose.pose.position.y - curr_pose.pose.pose.position.y),
-                                (pose.pose.position.x - curr_pose.pose.pose.position.x));
-                                
-            }
+            desired_phi =  atan2((pose.pose.position.y - curr_pose.pose.position.y),
+                                (pose.pose.position.x - curr_pose.pose.position.x));
 
             tf2::Quaternion q(
-            curr_pose.pose.pose.orientation.x,
-            curr_pose.pose.pose.orientation.y,
-            curr_pose.pose.pose.orientation.z,
-            curr_pose.pose.pose.orientation.w);            
+            curr_pose.pose.orientation.x,
+            curr_pose.pose.orientation.y,
+            curr_pose.pose.orientation.z,
+            curr_pose.pose.orientation.w);            
             tf2::Matrix3x3 m(q);
             double roll, pitch, yaw;
 
@@ -140,8 +142,8 @@ class ControllerServer{
             command.linear.x = forward_vel;
 
 
-            float distance_error = sqrt(pow((pose.pose.position.y - curr_pose.pose.pose.position.y),2) +
-                                    pow((pose.pose.position.x - curr_pose.pose.pose.position.x),2));
+            float distance_error = sqrt(pow((pose.pose.position.y - curr_pose.pose.position.y),2) +
+                                    pow((pose.pose.position.x - curr_pose.pose.position.x),2));
             
             vel_publisher.publish(command);
             ros::Duration(0.5).sleep();

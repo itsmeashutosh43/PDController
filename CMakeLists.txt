@@ -7,7 +7,7 @@ add_compile_options(-std=c++11)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
+find_package(catkin REQUIRED COMPONENTS	  
   map_msgs
   nav_msgs
   roscpp
@@ -19,6 +19,11 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_geometry_msgs
   
 )
+
+
+find_package( OpenCV REQUIRED )
+
+include_directories(${OpenCV_INCLUDE_DIRS})
 
 
 
@@ -238,6 +243,7 @@ add_executable(pd_server src/pd_server.cpp  src/pid_implementation.cpp src/brese
 
 target_link_libraries(
   pd_server
+  ${OpenCV_LIBS}
   ${catkin_LIBRARIES}
 )
 

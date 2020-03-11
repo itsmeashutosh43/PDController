@@ -38,9 +38,9 @@ class bresenham2D{
     double PI  =3.141592653589793238463;
     double prev = 0;
     
-    float data[120][120];
+    float data[80][80];
     float filter[40][40];
-    int8_t costmap_data[64000];
+    float costmap_data[6400];
 
     double resolution_ = 0.025;
     double *resolution = &(resolution_);
@@ -68,7 +68,7 @@ class bresenham2D{
     bresenham2D(double length);
     int compute(int *x,double goalX,double goalY);
     void print_corresponding_coordinates(int x);
-    cv::Mat* convolve();
+    bool convolve();
     void amcl_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr pose);
     void find_line(double x1, double y1, double x2, double y2);
     void put_point(double x ,double y);

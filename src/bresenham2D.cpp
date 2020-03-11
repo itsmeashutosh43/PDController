@@ -13,18 +13,11 @@ Detects the possible obstacle and notifies pid_controller class in case of any.
 
 bresenham2D::bresenham2D(double length_)
 {    
-  ROS_ERROR("bresenham started");
-
-
   
-
-  //put_points(0.8,1.5);
   costmap_subscriber = nh_.subscribe("/move_base/local_costmap/costmap",1,&bresenham2D::costmapCallback,this);  
   amcl_pose = nh_.subscribe("/amcl_pose", 1 , &bresenham2D::amcl_callback, this);
 
   ROS_INFO("Waiting for costmap to come up.");
-  
-
   length = &length_;
 
 
@@ -37,23 +30,34 @@ bresenham2D::bresenham2D(double length_)
 }
 
 
-cv::Mat* bresenham2D::convolve()
+bool bresenham2D::convolve()
 {
     
 
 
     cv::Mat kernel = cv::Mat(40,40, CV_32F, &filter);
-    cv::Mat src = cv::Mat((int)(120) ,(int)(120) , CV_32F, &data);
+    cv::Mat src = cv::Mat((int)(80) ,(int)(80) , CV_32F, &data);
 
     
     cv::filter2D(src,dest,-1,kernel);
+    cv::imshow("_show_",dest);
+    cv::waitKey(1);
 
     dest = dest.reshape(1, dest.rows * dest.cols);
 
-    return &dest;
+    cv::Mat costmap_data_mat = cv::Mat(6400,1,CV_32F,&costmap_data);
+    
+    double dot_sum = dest.dot(costmap_data_mat);
 
-    //cv::imshow("_show_",dest);
-    //cv::waitKey(0);
+    if (dot_sum > 10)
+    {
+        ROS_INFO("Dot product is %f", dot_sum);
+        return true;
+    }
+
+    return false;
+
+    
 }
 
 
@@ -65,8 +69,8 @@ int bresenham2D::compute(int *x, double goalX,double goalY)
     {
         refresh_data();
         find_line(curr_pose_x,curr_pose_y,goalX,goalY);
-        cv::Mat* output = convolve();
-    if (dot_product(output))
+        
+    if (convolve())
     {
         *x = 1;
         //refresh_data();
@@ -119,37 +123,6 @@ bool bresenham2D::check_robot_path(double goalX, double goalY)
 }
 
 
-/*
-void bresenham2D::find_line(double x1, double y1, double x2, double y2)
-{
-    
-    double dx = x2 - x1;
-    double dy = y2 - y1;
-    double P = 2 * dy - dx;
-
-    double x = x1;
-    double y = y1;
-
-    while (x <= x2){
-        if (*kill_p)
-        {
-            return;
-        }
-        put_point(x , y);
-        //points_inside_ellipse(x , y);
-
-        x += *resolution;
-
-        if (P < 0){ P = P + 2 * dy;}
-
-        else{
-            P = P +2 * dy - 2*dx;
-            y += *resolution;
-        }
-    }
-}
-
-*/
 
 void bresenham2D::find_line( double x,double y,double x2, double y2){
 
@@ -188,102 +161,44 @@ void bresenham2D::find_line( double x,double y,double x2, double y2){
  
 
 
-/*
-void bresenham2D::points_inside_ellipse( double x_0 , double y_0)
-{
-
-    std::random_device dev;
-    std::mt19937 rng(dev());
-    std::uniform_real_distribution<> rho(0 , 1);
-    std::uniform_real_distribution<> phi(0 , PI);
-
-    for (int  i = 0 ; i < 1000 ; i++)
-    {
-        double x = sqrt(rho(rng)) * cos(phi(rng));
-        double y = sqrt(rho(rng)) * sin(phi(rng));
-
-
-        x = x_0 + x * 1.5;
-        y = y_0 + y * 1.5;
-
-        put_point(x,y);
-
-    }
-
-    *semaphore = true;
-}
-*/
-
 
 
 void bresenham2D::put_point(double x ,double y)
 {
+    
+    int delx = (x - *originX)/ *resolution;
+    int dely = (y - *originY)/ *resolution;
+    int index = dely * 80 + delx;
 
-    int rows = (x- *originX)/ *resolution;
-    int columns = (y- *originY)/ *resolution;
-    int index = rows * 80 + columns;
     if (index < 0)
     {
         return;
     }
-    if (index < (width*height))
-    {            
-        data[rows + 20][columns + 20 ] = 1;
+
+    if (delx < 0 || dely <0)
+    {
+        return;
     }
 
-    else{
-        //kill = true;
-    }
+
+    if (delx < 80 && dely < 80)
+    {
+        data[dely][delx] = 1; }
     
 }
 
 
-/*
-
-void bresenham2D::put_points(double c_width, double c_length)
-{
-
-    ROS_INFO("%f %f", c_width,c_length);
-
-    int iter_x = (int)(c_width / *resolution);
-    int iter_y = (int)(c_length/ *resolution);
-
-    ROS_INFO("%d %d", iter_x , iter_y);
-
-
-    int start_x = 40 - (iter_x);
-
-    int end_x = 40 + (iter_x);
-
-
-    for (auto rows = 40 ; rows <= 80 ; rows++)
-    {
-        for (auto columns = start_x; columns<= end_x ; columns++)
-        {
-            int index = rows * 80 + columns;
-            
-            print_corresponding_coordinates(index);
-            data[index] = 100;
-        }
-    }
-
-}
-
-
-*/
 
 void bresenham2D::refresh_data()
 {
-    for (int i = 0; i< 120 ; i++)
+    for (int i = 0; i< 80 ; i++)
     {
-        for (int j = 0; j< 120 ; j++)
+        for (int j = 0; j< 80 ; j++)
         {
             data[i][j] = 0;
         }
     }
 }
-
-
 
 
 
@@ -295,7 +210,7 @@ void bresenham2D::refresh_data_filter()
         {
             if (distance(i ,j , 20 ,20))
             {
-                filter[i][j] = 10;
+                filter[i][j] = 1;
             }
         }
     }
@@ -355,7 +270,6 @@ void bresenham2D::costmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& costm
             for (auto i = 0 ; i< (height*width) ; i++)
             {
                 costmap_data[i] = costmap->data[i];
-                    //ROS_INFO("%d", i);
 
             }
 

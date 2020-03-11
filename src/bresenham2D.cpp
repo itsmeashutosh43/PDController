@@ -5,10 +5,6 @@ Detects the possible obstacle and notifies pid_controller class in case of any.
 
 
 #include "bresenham2D.h"
-#include "costmap_2d/costmap_2d_ros.h"
-#include <random>
-#include <thread>
-#include <future>
 
 
 bresenham2D::bresenham2D(double length_)

@@ -7,16 +7,16 @@ Detects the possible obstacle and notifies pid_controller class in case of any.
 #include "bresenham2D.h"
 
 
-bresenham2D::bresenham2D(double length_)
+bresenham2D::bresenham2D(double length_, _Smoother sm)
 {    
-  
+
   costmap_subscriber = nh_.subscribe("/move_base/local_costmap/costmap",1,&bresenham2D::costmapCallback,this);  
   amcl_pose = nh_.subscribe("/amcl_pose", 1 , &bresenham2D::amcl_callback, this);
 
   length = &length_;
 
   refresh_data();
-  refresh_data_filter();
+  refresh_data_filter(sm);
 }
 
 
@@ -55,7 +55,7 @@ void bresenham2D::costmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& costm
         
         
     else{
-            ROS_ERROR("lock not recieved");
+            ROS_ERROR("lock not recieved for costmap update");
     }
 
 }
@@ -125,9 +125,13 @@ bool bresenham2D::convolve()
 
     
     cv::filter2D(src,dest,-1,kernel);
+    cv::imshow("",dest);
+    cv::waitKey(1);
     
 
     dest = dest.reshape(1, dest.rows * dest.cols);
+
+    
 
     cv::Mat costmap_data_mat = cv::Mat(6400,1,CV_32F,&costmap_data);
     
@@ -218,27 +222,27 @@ void bresenham2D::refresh_data()
 
 
 
-void bresenham2D::refresh_data_filter()
+void bresenham2D::refresh_data_filter(_Smoother sm)
 {
     for(int i = 0; i< 40 ;i++)
     {
         for (int j =0 ; j < 40 ; j++)
         {
-            if (distance(i ,j , 20 ,20))
+            if (within_distance(i ,j , 20 ,20))
             {
-                filter[i][j] = 1;
+                filter[i][j] = sm.smoother_funct(2, 0 , 0.09,distance(i,j,20,20));
             }
         }
     }
 }
 
 
-bool bresenham2D::distance(int x1, int y1 , int x0 , int y0)
+bool bresenham2D::within_distance(int x1, int y1 , int x0 , int y0)
     {
 
-        float distance = std::sqrt(std::pow(x1 - x0,2) + std::pow(y1 - y0,2));
+        float distance_ = distance(x1, y1, x0 , y0);
 
-        if (distance > 20)
+        if (distance_ > 20)
         {
             return false;
         }
@@ -246,6 +250,11 @@ bool bresenham2D::distance(int x1, int y1 , int x0 , int y0)
         return true;
 
     }
+
+float bresenham2D::distance(int x1, int y1 , int x0 ,int y0)
+{
+    return std::sqrt(std::pow(x1 - x0,2) + std::pow(y1 - y0,2));
+}
 
 
 

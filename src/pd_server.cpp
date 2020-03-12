@@ -1,5 +1,5 @@
-#include<ros/ros.h>
-#include<actionlib/server/simple_action_server.h>
+#include <ros/ros.h>
+#include <actionlib/server/simple_action_server.h>
 #include <math.h>
 #include <pd_controller/pdAction.h>
 #include "pid_implementation.h"
@@ -16,8 +16,6 @@
 #include "bresenham2D.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "costmap_2d/costmap_2d_ros.h"
-#include "velocity_smoother.h"
-
 
 /*
 
@@ -29,7 +27,7 @@ class ControllerServer{
     protected:
 
     ros::NodeHandle nh_;
-    VelocitySmoother vs;
+    _Smoother vs;
     bool getting_goal = false;
     actionlib::SimpleActionServer<pd_controller::pdAction> as_;
     pd_controller::pdResult result_;
@@ -52,17 +50,18 @@ class ControllerServer{
     as_(nh_, name, boost::bind(&ControllerServer::executeCB, this, _1),false),
     action_name(name),
     tf_(tf),
-    vs(0.0, 0.0, 0.0)
+    vs()
     {
 
-        vs = VelocitySmoother(0.2 , 25 , 0.4);
+        vs = _Smoother();
+        //
 
         ROS_INFO("here");
        
         odom_callback = nh_.subscribe("/odom",1,&ControllerServer::odomCallback,this);
         amcl_callback = nh_.subscribe("/amcl_pose", 1 , &ControllerServer::amclCallBack, this);
         vel_publisher = nh_.advertise<geometry_msgs::Twist>("/cmd_vel_mux/input/navi", 10);
-        find_obstacle = new bresenham2D(0.4);
+        find_obstacle = new bresenham2D(0.4, vs);
         
         as_.start();
     }
@@ -134,7 +133,7 @@ class ControllerServer{
             PD pid = PD(0.1, 3, 0.05 ,0);
             double desired_rotate = pid.calculate(e_);
 
-            double forward_vel = vs.smooth_velocity(e_);
+            double forward_vel = vs.smooth_velocity(0.2 , 25 , 0.4, e_);
 
             geometry_msgs::Twist command = geometry_msgs::Twist();
             command.angular.z = desired_rotate;

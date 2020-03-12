@@ -2,19 +2,18 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include <opencv2/core/core.hpp>
-
 #include <chrono>
 #include <ctime> 
 #include <mutex>
 #include <future>
 #include <thread>
-
 #include <nav_msgs/OccupancyGrid.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include "pd_controller/prob.h"
 #include "pd_controller/ray.h"
+#include "smoother.h"
 
 
 
@@ -55,19 +54,21 @@ class bresenham2D{
     
     cv::Mat dest;
     std::mutex m;
+
         
-    bresenham2D(double length);
+    bresenham2D(double length, _Smoother s);
 
     void amcl_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr pose);
     void costmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& costmap );
 
     bool check_robot_path(double goalX, double goalY);
     void refresh_data();
-    void refresh_data_filter();
+    void refresh_data_filter(_Smoother sm);
     int compute(int *x,double goalX,double goalY);
     bool convolve();
     void find_line(double x1, double y1, double x2, double y2);
     void put_point(double x ,double y);
-    bool distance(int x1, int y1 , int x0 , int y0);
+    float distance(int x1, int y1 , int x0 , int y0);
+    bool within_distance(int x1, int y1, int x0, int y0);
     
 };

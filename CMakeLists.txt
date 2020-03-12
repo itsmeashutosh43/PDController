@@ -239,7 +239,7 @@ target_link_libraries(
 )
 
 
-add_executable(pd_server src/pd_server.cpp  src/pid_implementation.cpp src/bresenham2D.h src/bresenham2D.cpp src/velocity_smoother.h)
+add_executable(pd_server src/pd_server.cpp  src/pid_implementation.cpp src/bresenham2D.h src/bresenham2D.cpp src/smoother.h)
 
 target_link_libraries(
   pd_server

@@ -5,5 +5,5 @@
 3)  Error in recieving multiple goals in actionlib server.(Solved)
 4)  Rotation gets higher precedence over obstacle avoidance node.
 5)  Reduce kernel size upto 0.3m each side and forward to 0.5m, then check.
-6)  Check collision avoidance for three costmap instances before stopping.
+6)  Check collision avoidance for three costmap instances before stopping.(Solved)
 

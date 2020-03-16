@@ -9,12 +9,9 @@ Detects the possible obstacle and notifies pid_controller class in case of any.
 
 bresenham2D::bresenham2D(double length_, _Smoother sm)
 {    
-
   costmap_subscriber = nh_.subscribe("/move_base/local_costmap/costmap",1,&bresenham2D::costmapCallback,this);  
   amcl_pose = nh_.subscribe("/amcl_pose", 1 , &bresenham2D::amcl_callback, this);
-
   length = &length_;
-
   refresh_data();
   refresh_data_filter(sm);
 }
@@ -23,10 +20,8 @@ bresenham2D::bresenham2D(double length_, _Smoother sm)
 
 void bresenham2D::amcl_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr pose)
 {
-    
     curr_pose_x = pose->pose.pose.position.x;
     curr_pose_y = pose->pose.pose.position.y;
-
 }
 
 
@@ -37,7 +32,6 @@ void bresenham2D::costmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& costm
 
     if (m.try_lock())
     {
-
         height = costmap->info.height;
         width = costmap->info.width;
         resolution_ = costmap->info.resolution;  
@@ -64,7 +58,6 @@ void bresenham2D::costmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& costm
 
 bool bresenham2D::check_robot_path(double goalX, double goalY)
 {
-
     if ((!(*costmap_)) ){
         ROS_INFO("Either there's no footprint or costmap here!");
         ros::Duration(1).sleep();
@@ -74,20 +67,14 @@ bool bresenham2D::check_robot_path(double goalX, double goalY)
     t1.join();
 
     if (sem == 1)
-    {
-        return true;
+    {   return true;
     }
-
     return false;
-
-
 }
 
 
 int bresenham2D::compute(int *x, double goalX,double goalY)
 {
-
-    
     if (m.try_lock())
     {
         refresh_data();
@@ -104,37 +91,23 @@ int bresenham2D::compute(int *x, double goalX,double goalY)
 
     else{
             ROS_ERROR("lock not recieved");
-        }
-
+    }
     m.unlock();
-
     *x = 0;
-
-
 }
 
 
 
 bool bresenham2D::convolve()
 {
-    
-
-
     cv::Mat kernel = cv::Mat(40,40, CV_32F, &filter);
-    cv::Mat src = cv::Mat((int)(80) ,(int)(80) , CV_32F, &data);
-
-    
+    cv::Mat src = cv::Mat((80) ,(80) , CV_32F, &data);
     cv::filter2D(src,dest,-1,kernel);
     cv::imshow("",dest);
     cv::waitKey(1);
-    
-
     dest = dest.reshape(1, dest.rows * dest.cols);
-
-    
-
     cv::Mat costmap_data_mat = cv::Mat(6400,1,CV_32F,&costmap_data);
-    
+
     double dot_sum = dest.dot(costmap_data_mat);
 
     if (dot_sum > 10)
@@ -143,9 +116,7 @@ bool bresenham2D::convolve()
         return true;
     }
 
-    return false;
-
-    
+    return false;    
 }
 
 
@@ -169,7 +140,7 @@ void bresenham2D::find_line( double x,double y,double x2, double y2){
     int numerator = longest >> 1 ;
     for (int i=0;i<=longest;i++) {
 
-        put_point(x,y);
+        world_to_map(x,y);
         numerator += shortest ;
         if (!(numerator<longest)) {
             numerator -= longest ;
@@ -183,40 +154,33 @@ void bresenham2D::find_line( double x,double y,double x2, double y2){
  
 }
 
-void bresenham2D::put_point(double x ,double y)
+void bresenham2D::world_to_map(double x ,double y)
 {
-    
-    int delx = (x - *originX)/ *resolution;
-    int dely = (y - *originY)/ *resolution;
-    int index = dely * 80 + delx;
-
-    if (index < 0)
+    if (x < *originX || y < *originY)
     {
         return;
     }
 
-    if (delx < 0 || dely <0)
-    {
-        return;
-    }
+    int mx = (x - *originX)/ *resolution;
+    int my = (y - *originY)/ *resolution;
+    int index = my * 80 + mx;
 
-
-    if (delx < 80 && dely < 80)
+    if ( mx < 80 && my < 80)
     {
-        data[dely][delx] = 1; }
-    
+        data[index] = 1; 
+        }
 }
+
+
+
 
 
 
 void bresenham2D::refresh_data()
 {
-    for (int i = 0; i< 80 ; i++)
+    for (int i = 0; i< 80*80 ; i++)
     {
-        for (int j = 0; j< 80 ; j++)
-        {
-            data[i][j] = 0;
-        }
+        data[i] = 0;
     }
 }
 

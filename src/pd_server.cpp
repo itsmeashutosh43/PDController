@@ -38,6 +38,7 @@ class ControllerServer{
     double omega = 0.0;
     geometry_msgs::Twist vel_msg;
     nav_msgs::Odometry curr_pose_;
+    int stop_count = 0;
 
     geometry_msgs::PoseWithCovariance curr_pose;
     bool success = false;
@@ -54,10 +55,6 @@ class ControllerServer{
     {
 
         vs = _Smoother();
-        //
-
-        ROS_INFO("here");
-       
         odom_callback = nh_.subscribe("/odom",1,&ControllerServer::odomCallback,this);
         amcl_callback = nh_.subscribe("/amcl_pose", 1 , &ControllerServer::amclCallBack, this);
         vel_publisher = nh_.advertise<geometry_msgs::Twist>("/cmd_vel_mux/input/navi", 10);
@@ -92,25 +89,28 @@ class ControllerServer{
 
     void executeCB(const pd_controller::pdGoalConstPtr &goal)
     {   
-
         geometry_msgs::PoseStamped pose = goal->position;
-
-
         ROS_INFO("got goal for %f and %f", pose.pose.position.x, pose.pose.position.y);
-        
         while (true){
-
-
-
             bool a = find_obstacle->check_robot_path(pose.pose.position.x, pose.pose.position.y);
             if (a){
-                sendZeroVel();
-                ROS_WARN("Detected something in robot's path, please confirm. Sleeping for 2 secs.");
-                ros::Duration(3).sleep();
-                
-                continue;}
+                stop_count+=1;
 
+                if (stop_count <=2)
+                {
+                    ROS_INFO("Found an obstacle. Confirming ...");
+                    ros::Duration(0.3).sleep();
+                }
+                else
+                {
+                    sendZeroVel();
+                    ROS_WARN("Obstacle Confirmed, check. Sleeping for 2 secs.");
+                    ros::Duration(2).sleep();
+                }
+                continue;
+            }
 
+            stop_count = 0;
             float desired_phi;            
 
             desired_phi =  atan2((pose.pose.position.y - curr_pose.pose.position.y),

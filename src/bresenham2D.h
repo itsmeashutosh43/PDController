@@ -17,8 +17,6 @@
 
 
 
-
-
 class bresenham2D{
     public:
     ros::Subscriber costmap_subscriber, footprint , amcl_pose;
@@ -45,7 +43,7 @@ class bresenham2D{
     double curr_pose_x;
     double curr_pose_y;
 
-    float data[80][80];
+    float data[6400];
     float filter[40][40];
     float costmap_data[6400];
 
@@ -67,7 +65,7 @@ class bresenham2D{
     int compute(int *x,double goalX,double goalY);
     bool convolve();
     void find_line(double x1, double y1, double x2, double y2);
-    void put_point(double x ,double y);
+    void world_to_map(double x ,double y);
     float distance(int x1, int y1 , int x0 , int y0);
     bool within_distance(int x1, int y1, int x0, int y0);
     

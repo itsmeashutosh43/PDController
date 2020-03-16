@@ -1,7 +1,5 @@
 /*
-
 Implementation of PID Controller.
-
 */
 
 
@@ -33,7 +31,6 @@ double PD::calculate( double error )
     // Integral portion
     _integral += error * _dt;
     double Iout = _Ki * _integral;
-
     */
 
     double derivative = (error - _pre_error) / _dt;

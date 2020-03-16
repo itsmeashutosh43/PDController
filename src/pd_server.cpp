@@ -29,6 +29,7 @@ class ControllerServer{
     ros::NodeHandle nh_;
     _Smoother vs;
     bool getting_goal = false;
+    bool obstacle_nearby = false;
     actionlib::SimpleActionServer<pd_controller::pdAction> as_;
     pd_controller::pdResult result_;
     std::string action_name;
@@ -65,11 +66,11 @@ class ControllerServer{
 
 
 
-    void sendZeroVel()
+    void send_velocity(double rot, double linear)
     {
         geometry_msgs::Twist command = geometry_msgs::Twist();
-        command.linear.x = 0;
-        command.angular.z = 0;
+        command.linear.x = linear;
+        command.angular.z = rot;
         vel_publisher.publish(command);    
     }
 
@@ -93,21 +94,9 @@ class ControllerServer{
         ROS_INFO("got goal for %f and %f", pose.pose.position.x, pose.pose.position.y);
         while (true){
             bool a = find_obstacle->check_robot_path(pose.pose.position.x, pose.pose.position.y);
-            if (a){
-                stop_count+=1;
-
-                if (stop_count <=2)
-                {
-                    ROS_INFO("Found an obstacle. Confirming ...");
-                    ros::Duration(0.3).sleep();
-                }
-                else
-                {
-                    sendZeroVel();
-                    ROS_WARN("Obstacle Confirmed, check. Sleeping for 2 secs.");
-                    ros::Duration(2).sleep();
-                }
-                continue;
+            obstacle_nearby = false;
+            if (a){                
+                obstacle_nearby = true;
             }
 
             stop_count = 0;
@@ -130,26 +119,42 @@ class ControllerServer{
             double e = desired_phi - yaw;
             double e_ = atan2(sin(e),cos(e));
 
+
             PD pid = PD(0.1, 3, 0.05 ,0);
+
             double desired_rotate = pid.calculate(e_);
+
+            if (abs(desired_rotate) == 0.2 && obstacle_nearby)
+            {
+                ROS_WARN("Obstacle detected but still rotating");
+                send_velocity(desired_rotate, 0);
+                continue;
+                
+            }
+
+            if (obstacle_nearby){
+                ROS_WARN("Obstacle in straight path.. sending 0 vel");
+                send_velocity(0,0);
+                ros::Duration(1).sleep();
+                continue;
+            }
+
+            
+            
 
             double forward_vel = vs.smooth_velocity(0.2 , 25 , 0.4, e_);
 
-            geometry_msgs::Twist command = geometry_msgs::Twist();
-            command.angular.z = desired_rotate;
-
-            command.linear.x = forward_vel;
-
+            send_velocity(desired_rotate, forward_vel);
 
             float distance_error = sqrt(pow((pose.pose.position.y - curr_pose.pose.position.y),2) +
                                     pow((pose.pose.position.x - curr_pose.pose.position.x),2));
             
-            vel_publisher.publish(command);
+            
             ros::Duration(0.5).sleep();
 
             if (distance_error < 0.5)
             {
-                sendZeroVel();
+                send_velocity(0,0);
                 ROS_INFO("Close enough to goal, you may stop");
                 success = true;
                 as_.setSucceeded(result_);

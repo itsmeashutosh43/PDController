@@ -1,0 +1,7 @@
+<library path="lib/libpd_controller">
+  <class name="pd_controller/PDController" type="pd_controller::PDController" base_class_type="nav_core::BaseLocalPlanner">
+    <description>
+      A implementation of a local planner that attempts to follow a PID Plan as closely as possible.
+    </description>
+  </class>
+</library>

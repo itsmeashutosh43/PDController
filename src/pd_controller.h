@@ -7,6 +7,11 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <base_local_planner/trajectory_planner_ros.h>
+#include <dynamic_reconfigure/server.h>
+
+#include <pd_controller/PDControllerConfig.h>
+
+
 
 
 
@@ -22,14 +27,21 @@ namespace pd_controller{
 
 
         private:
+        void reconfigureCB(pd_controller::PDControllerConfig &config , uint32_t level);
          tf2_ros::Buffer* tf_;
          ros::Time goal_reached_time;
          costmap_2d::Costmap2DROS *costmap_ros_;
          base_local_planner::TrajectoryPlannerROS collision_planner_;
          geometry_msgs::PoseStamped goal;
          _Smoother vs;
+        dynamic_reconfigure::Server<pd_controller::PDControllerConfig> *dsrv_;
+
          bool goal_reached = false;
          bool stopped= false;
+
+         bool collision_flag;
+         double vel_forward;
+         double vel_rot;
 
 
     };

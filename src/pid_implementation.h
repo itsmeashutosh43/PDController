@@ -4,7 +4,7 @@ class PD
 public:
     PD( double dt,double Kp, double Kd, double Ki );
     
-    double calculate( double error);
+    double calculate( double error, double vel);
 
 private:
     double _dt;

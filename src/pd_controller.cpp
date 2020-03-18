@@ -13,6 +13,17 @@ namespace pd_controller
     {
 
     }
+    
+
+    void PDController::reconfigureCB(pd_controller::PDControllerConfig &config , uint32_t level){
+
+        ROS_INFO("Updated velocities %f %f", config.vel_lin, config.vel_rot);
+
+        vel_forward = config.vel_lin;
+        vel_rot = config.vel_rot;
+        collision_flag = collision_flag;
+    }
+    
 
     void PDController::initialize(std::string name, tf2_ros::Buffer* tf, costmap_2d::Costmap2DROS* costmap_ros)
     {
@@ -22,9 +33,16 @@ namespace pd_controller
         costmap_ros_ = costmap_ros;
         vs = _Smoother();
         collision_planner_.initialize(name + "/collision_planner", tf_, costmap_ros_);
-        ros::NodeHandle node;
+    
+        ros::NodeHandle private_nh("~/" + name);
 
         ROS_INFO("Initialised custom local planner");
+
+        dsrv_ = new dynamic_reconfigure::Server<pd_controller::PDControllerConfig>(ros::NodeHandle(private_nh));
+
+        dynamic_reconfigure::Server<pd_controller::PDControllerConfig>::CallbackType cb = boost::bind(&PDController::reconfigureCB, this, _1,_2);
+
+        dsrv_->setCallback(cb);
     }
 
     bool PDController::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
@@ -59,9 +77,9 @@ namespace pd_controller
 
         PD pid = PD(0.1, 3, 0.05 ,0);
 
-        double desired_rotate = pid.calculate(e_);
+        double desired_rotate = pid.calculate(e_,vel_rot);
 
-        double forward_vel = vs.smooth_velocity(0.5 , 25 , 0.4, e_);
+        double forward_vel = vs.smooth_velocity(vel_forward , 25 , 0.4, e_);
 
         float distance_error = sqrt(pow((goal.pose.position.y - robot_pose.pose.position.y),2) +
                                     pow((goal.pose.position.x - robot_pose.pose.position.x),2)); 

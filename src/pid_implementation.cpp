@@ -20,7 +20,7 @@ PD::PD( double dt, double Kp, double Kd, double Ki )
 }
 
 
-double PD::calculate( double error )
+double PD::calculate( double error, double max_ )
 {
 
     
@@ -41,12 +41,12 @@ double PD::calculate( double error )
 
     if ((output > 0.2))
     {
-        output = 0.2;
+        output = max_;
     }
 
     else if((output < 0) && (output < -0.2))
     {
-        output = -0.2;
+        output = -max_;
     }
 
     // Save error to previous error

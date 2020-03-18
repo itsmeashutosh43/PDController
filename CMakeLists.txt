@@ -6,11 +6,18 @@ find_package(catkin REQUIRED COMPONENTS ${pose_follower_ROS_DEPS})
 
 
 
+generate_dynamic_reconfigure_options(
+  cfg/pd_controller.cfg
+)
+
 
 catkin_package(
   LIBRARIES pd_controller
   CATKIN_DEPENDS ${pose_follower_ROS_DEPS}
 )
+
+# make sure configure headers are built before any node using them
+
 
 
 

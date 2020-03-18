@@ -16,9 +16,11 @@ namespace pd_controller
 
     void PDController::initialize(std::string name, tf2_ros::Buffer* tf, costmap_2d::Costmap2DROS* costmap_ros)
     {
+
+
         tf_ = tf;
         costmap_ros_ = costmap_ros;
-
+        vs = _Smoother();
         collision_planner_.initialize(name + "/collision_planner", tf_, costmap_ros_);
         ros::NodeHandle node;
 
@@ -36,11 +38,7 @@ namespace pd_controller
             cmd_vel = empty_twist;
             return false;
         }
-
-
-        ROS_INFO("Current pose of the robot is %f %f",robot_pose.pose.position.x, robot_pose.pose.position.y);
-
-
+        
         float desired_phi =  atan2((goal.pose.position.y - robot_pose.pose.position.y),
                                 (goal.pose.position.x - robot_pose.pose.position.x));
 
@@ -63,7 +61,7 @@ namespace pd_controller
 
         double desired_rotate = pid.calculate(e_);
 
-        double forward_vel = 0.2;
+        double forward_vel = vs.smooth_velocity(0.2 , 25 , 0.4, e_);
 
         float distance_error = sqrt(pow((goal.pose.position.y - robot_pose.pose.position.y),2) +
                                     pow((goal.pose.position.x - robot_pose.pose.position.x),2)); 

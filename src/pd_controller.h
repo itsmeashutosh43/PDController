@@ -27,6 +27,7 @@ namespace pd_controller{
          costmap_2d::Costmap2DROS *costmap_ros_;
          base_local_planner::TrajectoryPlannerROS collision_planner_;
          geometry_msgs::PoseStamped goal;
+         _Smoother vs;
          bool goal_reached = false;
          bool stopped= false;
 

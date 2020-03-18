@@ -1,0 +1,9 @@
+\subsubsection usage Usage
+\verbatim
+<node name="pd_controller" pkg="pd_controller" type="pd_controller">
+  <param name="vel_lin" type="double" value="0.4" />
+  <param name="vel_rot" type="double" value="0.2" />
+  <param name="collision_flag" type="bool" value="True" />
+</node>
+\endverbatim
+

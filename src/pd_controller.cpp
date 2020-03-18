@@ -74,9 +74,11 @@ namespace pd_controller
             ROS_INFO("Reached tolerance level ");
             cmd_vel.linear.x = 0;
             cmd_vel.angular.z = 0;
-            goal_reached = true;
+            stopped = true;
             return true;
         }
+
+        stopped = false;
 
         cmd_vel.linear.x = forward_vel;
         cmd_vel.angular.z = desired_rotate;
@@ -87,18 +89,19 @@ namespace pd_controller
 
     bool PDController::setPlan(const std::vector<geometry_msgs::PoseStamped>& global_plan)
     {
-        // if this does not work, subscribe to move_base goals
+
         goal = global_plan.back();
-
-        ROS_INFO("Goal is %f %f",goal.pose.position.x, goal.pose.position.y);
-
         return true;
     }
 
     bool PDController::isGoalReached(){
 
-        ROS_INFO("Is goal reached %d", goal_reached);
-        return goal_reached;
+        if (stopped){
+            stopped = false;
+            return true;
+        }
+
+        return false;
 
     }    
 

@@ -23,10 +23,12 @@ namespace pd_controller{
 
         private:
          tf2_ros::Buffer* tf_;
+         ros::Time goal_reached_time;
          costmap_2d::Costmap2DROS *costmap_ros_;
          base_local_planner::TrajectoryPlannerROS collision_planner_;
          geometry_msgs::PoseStamped goal;
          bool goal_reached = false;
+         bool stopped= false;
 
 
     };

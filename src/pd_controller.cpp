@@ -38,7 +38,7 @@ namespace pd_controller
             cmd_vel = empty_twist;
             return false;
         }
-        
+
         float desired_phi =  atan2((goal.pose.position.y - robot_pose.pose.position.y),
                                 (goal.pose.position.x - robot_pose.pose.position.x));
 
@@ -61,7 +61,7 @@ namespace pd_controller
 
         double desired_rotate = pid.calculate(e_);
 
-        double forward_vel = vs.smooth_velocity(0.2 , 25 , 0.4, e_);
+        double forward_vel = vs.smooth_velocity(0.5 , 25 , 0.4, e_);
 
         float distance_error = sqrt(pow((goal.pose.position.y - robot_pose.pose.position.y),2) +
                                     pow((goal.pose.position.x - robot_pose.pose.position.x),2)); 
@@ -78,9 +78,20 @@ namespace pd_controller
 
         stopped = false;
 
-        cmd_vel.linear.x = forward_vel;
-        cmd_vel.angular.z = desired_rotate;
+
+        bool legal_traj = collision_planner_.checkTrajectory(forward_vel, 0 , desired_rotate, true);
+
+        if (legal_traj)
+        {
+            cmd_vel.linear.x = forward_vel;
+            cmd_vel.angular.z = desired_rotate;
+        }
         
+        else{
+            ROS_INFO("The computed trajectory is not a legal one. Sending zero velocity");
+            cmd_vel.linear.x = 0;
+            cmd_vel.angular.z = 0;
+        }
         return true;
 
     }

@@ -96,7 +96,15 @@ namespace pd_controller
 
         stopped = false;
 
+        if (!collision_flag)
+        {
+            cmd_vel.linear.x = forward_vel;
+            cmd_vel.angular.z = desired_rotate;
+            return true;
+        }
 
+
+        
         bool legal_traj = collision_planner_.checkTrajectory(forward_vel, 0 , desired_rotate, true);
 
         if (legal_traj)

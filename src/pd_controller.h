@@ -46,6 +46,8 @@ namespace pd_controller{
          double vel_forward;
          double vel_rot;
          bool rotate_to_goal;
+         double linear_tolerance;
+         double angular_tolerance;
 
 
     };

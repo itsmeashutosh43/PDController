@@ -23,6 +23,8 @@ namespace pd_controller
         vel_rot = config.vel_rot;
         collision_flag = config.collision_flag;
         rotate_to_goal = config.rotate_to_goal;
+        angular_tolerance = config.angular_tolerance;
+        linear_tolerance = config.linear_tolerance;
     }
     
 
@@ -76,7 +78,7 @@ namespace pd_controller
 
         
 
-        if (distance_error < 0.5 && rotate_to_goal)
+        if (distance_error < linear_tolerance && rotate_to_goal)
         {
             double desired_yaw = check_yaw(goal);
             float desired_rotate = check_desirable_rotation(desired_yaw , yaw);
@@ -86,7 +88,7 @@ namespace pd_controller
 
             ROS_INFO("error %f vel_rot %f", abs(e_),vel_rot);
 
-            if (abs(e_) >= vel_rot)
+            if (abs(e_) >= angular_tolerance)
             {
                 ROS_INFO("Rotate to goal executing");
                 send_command_vel(cmd_vel, 0 , desired_rotate);
@@ -101,7 +103,7 @@ namespace pd_controller
         }
 
 
-        else if (distance_error < 0.5)
+        else if (distance_error < linear_tolerance)
         {
             ROS_INFO("Reached tolerance level : linear distance");
             stopped = true;

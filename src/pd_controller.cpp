@@ -69,30 +69,41 @@ namespace pd_controller
         double forward_vel = vs.smooth_velocity(vel_forward , 0.2 , 0.4, desired_rotate);
 
         float distance_error = sqrt(pow((goal.pose.position.y - robot_pose.pose.position.y),2) +
-                                    pow((goal.pose.position.x - robot_pose.pose.position.x),2)); 
+                                    pow((goal.pose.position.x - robot_pose.pose.position.x),2));
+
+        
 
 
-        if (distance_error < 0.5)
+        
+
+        if (distance_error < 0.5 && rotate_to_goal)
         {
-            ROS_INFO("Reached tolerance level : linear distance");
-            
+            double desired_yaw = check_yaw(goal);
+            float desired_rotate = check_desirable_rotation(desired_yaw , yaw);
 
-            if (rotate_to_goal)
+            double e = desired_yaw - yaw;
+            double e_ = atan2(sin(e),cos(e));
+
+            ROS_INFO("error %f vel_rot %f", abs(e_),vel_rot);
+
+            if (abs(e_) >= vel_rot)
             {
-                ROS_INFO("Rotating to goal after reaching desired linear tolerance");
-                double desired_yaw = check_yaw(goal);
-                float desired_rotate = check_desirable_rotation(desired_yaw , yaw);
-                send_command_vel(cmd_vel,0,desired_rotate);
-                if (desired_rotate < 0.3)
-                {
-                    ROS_INFO("Reached tolerance level : angular rotation");
-                    rotate_to_goal = false;
-                }
+                ROS_INFO("Rotate to goal executing");
+                send_command_vel(cmd_vel, 0 , desired_rotate);
+                return true;
             }
 
             else{
-                send_command_vel(cmd_vel, 0 , 0);
-            }
+                ROS_INFO("Reached Tolerance level : angular distance");
+                stopped = true;
+                return true;
+            } 
+        }
+
+
+        else if (distance_error < 0.5)
+        {
+            ROS_INFO("Reached tolerance level : linear distance");
             stopped = true;
             return true;
         }
@@ -105,10 +116,6 @@ namespace pd_controller
             send_command_vel(cmd_vel, forward_vel,desired_rotate);
             return true;
         }
-
-        
-            
-
 
         
         bool legal_traj = collision_planner_.checkTrajectory(forward_vel, 0 , desired_rotate, true);

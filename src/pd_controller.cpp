@@ -25,6 +25,9 @@ namespace pd_controller
         rotate_to_goal = config.rotate_to_goal;
         angular_tolerance = config.angular_tolerance;
         linear_tolerance = config.linear_tolerance;
+        k_p = config.k_p;
+        k_i = config.k_i;
+        k_d = config.k_d;
     }
     
 
@@ -145,7 +148,7 @@ namespace pd_controller
     {
         double e = desired_yaw - yaw;
         double e_ = atan2(sin(e),cos(e));
-        PD pid = PD(0.1, 3, 0.05 ,0);
+        PD pid = PD(0.1, k_p, k_d ,k_i);
         double desired_rotate = pid.calculate(e_,vel_rot);
         return desired_rotate;
 

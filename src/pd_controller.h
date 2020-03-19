@@ -48,6 +48,7 @@ namespace pd_controller{
          bool rotate_to_goal;
          double linear_tolerance;
          double angular_tolerance;
+         double k_p, k_i,k_d;
 
 
     };

@@ -15,11 +15,13 @@ class _Smoother{
     }
     double smooth_velocity(double maximum_vel , double error_tolerance, double k,double error)
     {
-        error = (180/3.1415)*error;
-        if ((abs(error) >= error_tolerance))
+        
+        if ((abs(error) == error_tolerance))
         {
             return 0;
         }
+        error = (180/3.1415)*error;
+        error_tolerance = (180/3.14)*error_tolerance;
         return maximum_vel * std::exp(k * (-error + error_tolerance))/(1 + std::exp(k * (-error + error_tolerance)));
     }
 

@@ -28,6 +28,9 @@ namespace pd_controller{
 
         private:
         void reconfigureCB(pd_controller::PDControllerConfig &config , uint32_t level);
+        double check_yaw(geometry_msgs::PoseStamped pose);
+        double check_desirable_rotation(double desired_yaw ,double yaw);
+        void send_command_vel(geometry_msgs::Twist& cmd_vel, double f_vel ,double rot_vel);
          tf2_ros::Buffer* tf_;
          ros::Time goal_reached_time;
          costmap_2d::Costmap2DROS *costmap_ros_;
@@ -42,6 +45,7 @@ namespace pd_controller{
          bool collision_flag;
          double vel_forward;
          double vel_rot;
+         bool rotate_to_goal;
 
 
     };

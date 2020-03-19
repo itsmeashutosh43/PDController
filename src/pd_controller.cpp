@@ -21,7 +21,8 @@ namespace pd_controller
 
         vel_forward = config.vel_lin;
         vel_rot = config.vel_rot;
-        collision_flag = collision_flag;
+        collision_flag = config.collision_flag;
+        rotate_to_goal = config.rotate_to_goal;
     }
     
 
@@ -60,26 +61,12 @@ namespace pd_controller
         float desired_phi =  atan2((goal.pose.position.y - robot_pose.pose.position.y),
                                 (goal.pose.position.x - robot_pose.pose.position.x));
 
-        tf2::Quaternion q(
-            robot_pose.pose.orientation.x,
-            robot_pose.pose.orientation.y,
-            robot_pose.pose.orientation.z,
-            robot_pose.pose.orientation.w);            
-        tf2::Matrix3x3 m(q);
-        double roll, pitch, yaw;
+        float yaw = check_yaw(robot_pose);
 
-            
-        m.getRPY(roll, pitch, yaw);
+        double desired_rotate = check_desirable_rotation(desired_phi,yaw);
 
-        double e = desired_phi - yaw;
-        double e_ = atan2(sin(e),cos(e));
-
-
-        PD pid = PD(0.1, 3, 0.05 ,0);
-
-        double desired_rotate = pid.calculate(e_,vel_rot);
-
-        double forward_vel = vs.smooth_velocity(vel_forward , 25 , 0.4, e_);
+        
+        double forward_vel = vs.smooth_velocity(vel_forward , 0.2 , 0.4, desired_rotate);
 
         float distance_error = sqrt(pow((goal.pose.position.y - robot_pose.pose.position.y),2) +
                                     pow((goal.pose.position.x - robot_pose.pose.position.x),2)); 
@@ -87,9 +74,25 @@ namespace pd_controller
 
         if (distance_error < 0.5)
         {
-            ROS_INFO("Reached tolerance level ");
-            cmd_vel.linear.x = 0;
-            cmd_vel.angular.z = 0;
+            ROS_INFO("Reached tolerance level : linear distance");
+            
+
+            if (rotate_to_goal)
+            {
+                ROS_INFO("Rotating to goal after reaching desired linear tolerance");
+                double desired_yaw = check_yaw(goal);
+                float desired_rotate = check_desirable_rotation(desired_yaw , yaw);
+                send_command_vel(cmd_vel,0,desired_rotate);
+                if (desired_rotate < 0.3)
+                {
+                    ROS_INFO("Reached tolerance level : angular rotation");
+                    rotate_to_goal = false;
+                }
+            }
+
+            else{
+                send_command_vel(cmd_vel, 0 , 0);
+            }
             stopped = true;
             return true;
         }
@@ -98,10 +101,13 @@ namespace pd_controller
 
         if (!collision_flag)
         {
-            cmd_vel.linear.x = forward_vel;
-            cmd_vel.angular.z = desired_rotate;
+            ROS_INFO("Flag not checking for collision. This is dangerous. Set collision_flag to TRUE");
+            send_command_vel(cmd_vel, forward_vel,desired_rotate);
             return true;
         }
+
+        
+            
 
 
         
@@ -109,16 +115,44 @@ namespace pd_controller
 
         if (legal_traj)
         {
-            cmd_vel.linear.x = forward_vel;
-            cmd_vel.angular.z = desired_rotate;
+            send_command_vel(cmd_vel, forward_vel ,desired_rotate);
         }
         
         else{
             ROS_INFO("The computed trajectory is not a legal one. Sending zero velocity");
-            cmd_vel.linear.x = 0;
-            cmd_vel.angular.z = 0;
+            send_command_vel(cmd_vel, 0 ,0);
         }
         return true;
+
+    }
+
+
+    void PDController::send_command_vel(geometry_msgs::Twist& cmd_vel, double f_vel ,double rot_vel){
+        cmd_vel.linear.x = f_vel;
+        cmd_vel.angular.z = rot_vel;
+    }
+
+    double PDController::check_desirable_rotation(double desired_yaw ,double yaw)
+    {
+        double e = desired_yaw - yaw;
+        double e_ = atan2(sin(e),cos(e));
+        PD pid = PD(0.1, 3, 0.05 ,0);
+        double desired_rotate = pid.calculate(e_,vel_rot);
+        return desired_rotate;
+
+    }
+
+    double PDController::check_yaw(geometry_msgs::PoseStamped pose)
+    {
+        tf2::Quaternion q(
+            pose.pose.orientation.x,
+            pose.pose.orientation.y,
+            pose.pose.orientation.z,
+            pose.pose.orientation.w);            
+        tf2::Matrix3x3 m(q);
+        double roll, pitch, yaw;
+        m.getRPY(roll, pitch, yaw);
+        return yaw;
 
     }
 

@@ -13,6 +13,15 @@ namespace pd_controller
     {
 
     }
+
+    	
+    void PDController::amclCallback(const geometry_msgs::PoseWithCovarianceStamped msg)
+	{
+
+        robot_pose = msg;
+
+        ROS_INFO("amclcallback Robot pose is %f %f",msg.pose.pose.position.x, msg.pose.pose.position.y);
+	}
     
 
     void PDController::reconfigureCB(pd_controller::PDControllerConfig &config , uint32_t level){
@@ -42,7 +51,12 @@ namespace pd_controller
     
         ros::NodeHandle private_nh("~/" + name);
 
+        ros::NodeHandle n;
+
         ROS_INFO("Initialised custom local planner");
+        ROS_ERROR("Reached here");
+
+        ros::Subscriber amcl_sub = n.subscribe("/amcl_pose", 100, &PDController::amclCallback, this);
 
         dsrv_ = new dynamic_reconfigure::Server<pd_controller::PDControllerConfig>(ros::NodeHandle(private_nh));
 
@@ -53,28 +67,29 @@ namespace pd_controller
 
     bool PDController::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     {
-        geometry_msgs::PoseStamped robot_pose;
+        
 
-        if (!costmap_ros_->getRobotPose(robot_pose))
-        {
-            ROS_ERROR("Can't get robot pose");
-            geometry_msgs::Twist empty_twist;
-            cmd_vel = empty_twist;
-            return false;
-        }
+        ROS_INFO("Robot pose is %f %f",robot_pose.pose.pose.position.x, robot_pose.pose.pose.position.y);
+        ROS_INFO("Goal pose is %f %f", goal.pose.position.x, goal.pose.position.y);
 
-        float desired_phi =  atan2((goal.pose.position.y - robot_pose.pose.position.y),
-                                (goal.pose.position.x - robot_pose.pose.position.x));
+        float desired_phi =  atan2((goal.pose.position.y - robot_pose.pose.pose.position.y),
+                                (goal.pose.position.x - robot_pose.pose.pose.position.x));
 
-        float yaw = check_yaw(robot_pose);
+
+        ROS_INFO("Desired orientation wrt positive x axis is %f", desired_phi);
+
+        float yaw = check_yaw_robot(robot_pose);
+
+
+        //ROS_INFO("My orientation is %f , while the desired orientation is %f",yaw, desired_phi);
 
         double desired_rotate = check_desirable_rotation(desired_phi,yaw);
 
         
         double forward_vel = vs.smooth_velocity(vel_forward , 0.2 , 0.4, desired_rotate);
 
-        float distance_error = sqrt(pow((goal.pose.position.y - robot_pose.pose.position.y),2) +
-                                    pow((goal.pose.position.x - robot_pose.pose.position.x),2));
+        float distance_error = sqrt(pow((goal.pose.position.y - robot_pose.pose.pose.position.y),2) +
+                                    pow((goal.pose.position.x - robot_pose.pose.pose.position.x),2));
 
         
 
@@ -140,8 +155,8 @@ namespace pd_controller
 
 
     void PDController::send_command_vel(geometry_msgs::Twist& cmd_vel, double f_vel ,double rot_vel){
-        cmd_vel.linear.x = f_vel;
-        cmd_vel.angular.z = rot_vel;
+        cmd_vel.linear.x = 0;
+        cmd_vel.angular.z = 0;
     }
 
     double PDController::check_desirable_rotation(double desired_yaw ,double yaw)
@@ -153,6 +168,21 @@ namespace pd_controller
         return desired_rotate;
 
     }
+
+    double PDController::check_yaw_robot(geometry_msgs::PoseWithCovarianceStamped pose)
+    {
+        tf2::Quaternion q(
+            pose.pose.pose.orientation.x,
+            pose.pose.pose.orientation.y,
+            pose.pose.pose.orientation.z,
+            pose.pose.pose.orientation.w);            
+        tf2::Matrix3x3 m(q);
+        double roll, pitch, yaw;
+        m.getRPY(roll, pitch, yaw);
+        return yaw;
+
+    }
+
 
     double PDController::check_yaw(geometry_msgs::PoseStamped pose)
     {

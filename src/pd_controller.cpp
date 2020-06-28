@@ -37,6 +37,18 @@ namespace pd_controller
 
         tf_ = tf;
         costmap_ros_ = costmap_ros;
+        costmap_ros_->getRobotPose(robot_pose);
+
+        ROS_INFO("Frame is in %s", robot_pose.header.frame_id.c_str());
+
+        geometry_msgs::PoseStamped global_pose;
+        tf_->transform(robot_pose , global_pose,  "map");
+
+        ROS_INFO("x and y initial amcl_pose is %f %f", global_pose.pose.position.x, global_pose.pose.position.y);
+        
+
+        ROS_INFO("Frame is in %s", global_pose.header.frame_id.c_str());
+
         vs = _Smoother();
         collision_planner_.initialize(name + "/collision_planner", tf_, costmap_ros_);
     
@@ -53,7 +65,7 @@ namespace pd_controller
 
     bool PDController::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     {
-        geometry_msgs::PoseStamped robot_pose;
+        
 
         if (!costmap_ros_->getRobotPose(robot_pose))
         {
@@ -63,18 +75,23 @@ namespace pd_controller
             return false;
         }
 
-        float desired_phi =  atan2((goal.pose.position.y - robot_pose.pose.position.y),
-                                (goal.pose.position.x - robot_pose.pose.position.x));
 
-        float yaw = check_yaw(robot_pose);
+        geometry_msgs::PoseStamped global_pose;
+        tf_->transform(robot_pose , global_pose,  "map");
+
+
+        float desired_phi =  atan2((goal.pose.position.y - global_pose.pose.position.y),
+                                (goal.pose.position.x - global_pose.pose.position.x));
+
+        float yaw = check_yaw(global_pose);
 
         double desired_rotate = check_desirable_rotation(desired_phi,yaw);
 
         
         double forward_vel = vs.smooth_velocity(vel_forward , 0.2 , 0.4, desired_rotate);
 
-        float distance_error = sqrt(pow((goal.pose.position.y - robot_pose.pose.position.y),2) +
-                                    pow((goal.pose.position.x - robot_pose.pose.position.x),2));
+        float distance_error = sqrt(pow((goal.pose.position.y - global_pose.pose.position.y),2) +
+                                    pow((goal.pose.position.x - global_pose.pose.position.x),2));
 
         
 

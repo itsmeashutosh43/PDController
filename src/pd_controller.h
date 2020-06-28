@@ -36,6 +36,7 @@ namespace pd_controller{
          costmap_2d::Costmap2DROS *costmap_ros_;
          base_local_planner::TrajectoryPlannerROS collision_planner_;
          geometry_msgs::PoseStamped goal;
+         geometry_msgs::PoseStamped robot_pose;
          _Smoother vs;
         dynamic_reconfigure::Server<pd_controller::PDControllerConfig> *dsrv_;
 

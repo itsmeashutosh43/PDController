@@ -25,6 +25,7 @@ namespace pd_controller
         rotate_to_goal = config.rotate_to_goal;
         angular_tolerance = config.angular_tolerance;
         linear_tolerance = config.linear_tolerance;
+        latch_distance = config.latch_distance;
         k_p = config.k_p;
         k_i = config.k_i;
         k_d = config.k_d;
@@ -100,6 +101,10 @@ namespace pd_controller
 
         if (distance_error < linear_tolerance && rotate_to_goal)
         {
+            if (latch_distance)
+            {
+                xy_latch_distance = true;
+            }
             double desired_yaw = check_yaw(goal);
             float desired_rotate = check_desirable_rotation(desired_yaw , yaw);
 
@@ -132,7 +137,7 @@ namespace pd_controller
 
         stopped = false;
 
-        if (!collision_flag)
+        if (!collision_flag && !xy_latch_distance)
         {
             ROS_INFO("Flag not checking for collision. This is dangerous. Set collision_flag to TRUE");
             send_command_vel(cmd_vel, forward_vel,desired_rotate);
@@ -142,7 +147,7 @@ namespace pd_controller
         
         bool legal_traj = collision_planner_.checkTrajectory(forward_vel, 0 , desired_rotate, true);
 
-        if (legal_traj)
+        if (legal_traj && !xy_latch_distance)
         {
             send_command_vel(cmd_vel, forward_vel ,desired_rotate);
         }
@@ -187,6 +192,8 @@ namespace pd_controller
 
     bool PDController::setPlan(const std::vector<geometry_msgs::PoseStamped>& global_plan)
     {
+
+        xy_latch_distance = false;
 
         goal = global_plan.back();
         return true;

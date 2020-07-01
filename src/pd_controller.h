@@ -44,6 +44,8 @@ namespace pd_controller{
          bool stopped= false;
 
          bool collision_flag;
+         bool latch_distance;
+         bool xy_latch_distance;
          double vel_forward;
          double vel_rot;
          bool rotate_to_goal;

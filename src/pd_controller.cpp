@@ -131,6 +131,10 @@ namespace pd_controller
         else if (distance_error < linear_tolerance)
         {
             ROS_INFO("Reached tolerance level : linear distance");
+            if (latch_distance)
+            {
+                xy_latch_distance = true;
+            }
             stopped = true;
             return true;
         }
@@ -142,6 +146,11 @@ namespace pd_controller
             ROS_INFO("Flag not checking for collision. This is dangerous. Set collision_flag to TRUE");
             send_command_vel(cmd_vel, forward_vel,desired_rotate);
             return true;
+        }
+
+        if (xy_latch_distance)
+        {
+            ROS_INFO("Latchedddd");
         }
 
         

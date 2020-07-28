@@ -39,6 +39,7 @@ namespace pd_controller
         tf_ = tf;
         costmap_ros_ = costmap_ros;
         costmap_ros_->getRobotPose(robot_pose);
+        
 
         ROS_INFO("Frame is in %s", robot_pose.header.frame_id.c_str());
 
@@ -56,6 +57,9 @@ namespace pd_controller
         ros::NodeHandle private_nh("~/" + name);
 
         ROS_INFO("Initialised custom local planner");
+
+        omega_pub = private_nh.advertise<std_msgs::Float64>("omega",1000);
+        error_pub = private_nh.advertise<std_msgs::Float64>("error",1000); 
 
         dsrv_ = new dynamic_reconfigure::Server<pd_controller::PDControllerConfig>(ros::NodeHandle(private_nh));
 
@@ -179,8 +183,19 @@ namespace pd_controller
     {
         double e = desired_yaw - yaw;
         double e_ = atan2(sin(e),cos(e));
+        std_msgs::Float64 data;
+        data.data = e_;
+        error_pub.publish(data)
+
         PD pid = PD(0.1, k_p, k_d ,k_i);
         double desired_rotate = pid.calculate(e_,vel_rot);
+
+        std_msgs::Float64 data;
+        data.data = desired_rotate;
+
+        omega_pub.publish(data)
+
+
         return desired_rotate;
 
     }

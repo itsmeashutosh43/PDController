@@ -40,6 +40,9 @@ namespace pd_controller{
          _Smoother vs;
         dynamic_reconfigure::Server<pd_controller::PDControllerConfig> *dsrv_;
 
+        ros::Publisher omega_pub;
+        ros::Publisher error_pub;
+
          bool goal_reached = false;
          bool stopped= false;
 

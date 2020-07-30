@@ -93,12 +93,11 @@ namespace pd_controller
         double desired_rotate = check_desirable_rotation(desired_phi,yaw);
 
         
-        double forward_vel = vs.smooth_velocity(vel_forward , 0.2 , 0.4, desired_rotate);
+        double forward_vel = vs.smooth_velocity(vel_forward , vel_rot , desired_rotate);
 
         float distance_error = sqrt(pow((goal.pose.position.y - global_pose.pose.position.y),2) +
                                     pow((goal.pose.position.x - global_pose.pose.position.x),2));
 
-        
 
 
         
@@ -113,7 +112,16 @@ namespace pd_controller
             float desired_rotate = check_desirable_rotation(desired_yaw , yaw);
 
             double e = desired_yaw - yaw;
-            double e_ = atan2(sin(e),cos(e));
+            double e_ = atan2(sin(e),cos(e)); 
+
+            std_msgs::Float64 data;
+            data.data =abs(e_);
+            error_pub.publish(data);
+
+            std_msgs::Float64 data1;
+            data1.data = desired_rotate;
+            omega_pub.publish(data1);
+  
 
             ROS_INFO("error %f vel_rot %f", abs(e_),vel_rot);
 
@@ -132,6 +140,7 @@ namespace pd_controller
         }
 
 
+
         else if (distance_error < linear_tolerance)
         {
             ROS_INFO("Reached tolerance level : linear distance");
@@ -142,6 +151,18 @@ namespace pd_controller
             stopped = true;
             return true;
         }
+
+
+        double e = desired_phi - yaw;
+        double e_ = atan2(sin(e),cos(e));
+
+        std_msgs::Float64 data;
+        data.data =abs(e_);
+        error_pub.publish(data);
+
+        std_msgs::Float64 data1;
+        data1.data = desired_rotate;
+        omega_pub.publish(data1);
 
         stopped = false;
 
@@ -183,18 +204,9 @@ namespace pd_controller
     {
         double e = desired_yaw - yaw;
         double e_ = atan2(sin(e),cos(e));
-        std_msgs::Float64 data;
-        data.data = e_;
-        error_pub.publish(data)
 
         PD pid = PD(0.1, k_p, k_d ,k_i);
         double desired_rotate = pid.calculate(e_,vel_rot);
-
-        std_msgs::Float64 data;
-        data.data = desired_rotate;
-
-        omega_pub.publish(data)
-
 
         return desired_rotate;
 

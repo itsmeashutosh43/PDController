@@ -6,6 +6,7 @@
 #include "smoother.h"
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <std_msgs/Float64.h>
 #include <base_local_planner/trajectory_planner_ros.h>
 #include <dynamic_reconfigure/server.h>
 

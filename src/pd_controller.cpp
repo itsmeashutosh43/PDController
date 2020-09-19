@@ -34,6 +34,7 @@ namespace pd_controller
         rotate_to_goal = config.rotate_to_goal;
         angular_tolerance = config.angular_tolerance;
         linear_tolerance = config.linear_tolerance;
+        latch_distance = config.latch_distance;
         k_p = config.k_p;
         k_i = config.k_i;
         k_d = config.k_d;
@@ -46,6 +47,19 @@ namespace pd_controller
 
         tf_ = tf;
         costmap_ros_ = costmap_ros;
+        costmap_ros_->getRobotPose(robot_pose);
+        
+
+        ROS_INFO("Frame is in %s", robot_pose.header.frame_id.c_str());
+
+        geometry_msgs::PoseStamped global_pose;
+        tf_->transform(robot_pose , global_pose,  "map");
+
+        ROS_INFO("x and y initial amcl_pose is %f %f", global_pose.pose.position.x, global_pose.pose.position.y);
+        
+
+        ROS_INFO("Frame is in %s", global_pose.header.frame_id.c_str());
+
         vs = _Smoother();
         collision_planner_.initialize(name + "/collision_planner", tf_, costmap_ros_);
     
@@ -57,6 +71,9 @@ namespace pd_controller
         ROS_ERROR("Reached here");
 
         ros::Subscriber amcl_sub = n.subscribe("/amcl_pose", 100, &PDController::amclCallback, this);
+
+        omega_pub = private_nh.advertise<std_msgs::Float64>("omega",1000);
+        error_pub = private_nh.advertise<std_msgs::Float64>("error",1000); 
 
         dsrv_ = new dynamic_reconfigure::Server<pd_controller::PDControllerConfig>(ros::NodeHandle(private_nh));
 
@@ -78,31 +95,48 @@ namespace pd_controller
 
         ROS_INFO("Desired orientation wrt positive x axis is %f", desired_phi);
 
-        float yaw = check_yaw_robot(robot_pose);
+
+        geometry_msgs::PoseStamped global_pose;
+        tf_->transform(robot_pose , global_pose,  "map");
 
 
-        //ROS_INFO("My orientation is %f , while the desired orientation is %f",yaw, desired_phi);
+        float desired_phi =  atan2((goal.pose.position.y - global_pose.pose.position.y),
+                                (goal.pose.position.x - global_pose.pose.position.x));
+
+        float yaw = check_yaw(global_pose);
 
         double desired_rotate = check_desirable_rotation(desired_phi,yaw);
 
         
-        double forward_vel = vs.smooth_velocity(vel_forward , 0.2 , 0.4, desired_rotate);
+        double forward_vel = vs.smooth_velocity(vel_forward , vel_rot , desired_rotate);
 
-        float distance_error = sqrt(pow((goal.pose.position.y - robot_pose.pose.pose.position.y),2) +
-                                    pow((goal.pose.position.x - robot_pose.pose.pose.position.x),2));
+        float distance_error = sqrt(pow((goal.pose.position.y - global_pose.pose.position.y),2) +
+                                    pow((goal.pose.position.x - global_pose.pose.position.x),2));
 
-        
 
 
         
 
         if (distance_error < linear_tolerance && rotate_to_goal)
         {
+            if (latch_distance)
+            {
+                xy_latch_distance = true;
+            }
             double desired_yaw = check_yaw(goal);
             float desired_rotate = check_desirable_rotation(desired_yaw , yaw);
 
             double e = desired_yaw - yaw;
-            double e_ = atan2(sin(e),cos(e));
+            double e_ = atan2(sin(e),cos(e)); 
+
+            std_msgs::Float64 data;
+            data.data =abs(e_);
+            error_pub.publish(data);
+
+            std_msgs::Float64 data1;
+            data1.data = desired_rotate;
+            omega_pub.publish(data1);
+  
 
             ROS_INFO("error %f vel_rot %f", abs(e_),vel_rot);
 
@@ -121,26 +155,48 @@ namespace pd_controller
         }
 
 
+
         else if (distance_error < linear_tolerance)
         {
             ROS_INFO("Reached tolerance level : linear distance");
+            if (latch_distance)
+            {
+                xy_latch_distance = true;
+            }
             stopped = true;
             return true;
         }
 
+
+        double e = desired_phi - yaw;
+        double e_ = atan2(sin(e),cos(e));
+
+        std_msgs::Float64 data;
+        data.data =abs(e_);
+        error_pub.publish(data);
+
+        std_msgs::Float64 data1;
+        data1.data = desired_rotate;
+        omega_pub.publish(data1);
+
         stopped = false;
 
-        if (!collision_flag)
+        if (!collision_flag && !xy_latch_distance)
         {
             ROS_INFO("Flag not checking for collision. This is dangerous. Set collision_flag to TRUE");
             send_command_vel(cmd_vel, forward_vel,desired_rotate);
             return true;
         }
 
+        if (xy_latch_distance)
+        {
+            ROS_INFO("Latchedddd");
+        }
+
         
         bool legal_traj = collision_planner_.checkTrajectory(forward_vel, 0 , desired_rotate, true);
 
-        if (legal_traj)
+        if (legal_traj && !xy_latch_distance)
         {
             send_command_vel(cmd_vel, forward_vel ,desired_rotate);
         }
@@ -163,8 +219,10 @@ namespace pd_controller
     {
         double e = desired_yaw - yaw;
         double e_ = atan2(sin(e),cos(e));
+
         PD pid = PD(0.1, k_p, k_d ,k_i);
         double desired_rotate = pid.calculate(e_,vel_rot);
+
         return desired_rotate;
 
     }
@@ -200,6 +258,8 @@ namespace pd_controller
 
     bool PDController::setPlan(const std::vector<geometry_msgs::PoseStamped>& global_plan)
     {
+
+        xy_latch_distance = false;
 
         goal = global_plan.back();
         return true;

@@ -7,6 +7,7 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <std_msgs/Float64.h>
 #include <base_local_planner/trajectory_planner_ros.h>
 #include <dynamic_reconfigure/server.h>
 
@@ -40,13 +41,19 @@ namespace pd_controller{
          costmap_2d::Costmap2DROS *costmap_ros_;
          base_local_planner::TrajectoryPlannerROS collision_planner_;
          geometry_msgs::PoseStamped goal;
+         geometry_msgs::PoseStamped robot_pose;
          _Smoother vs;
         dynamic_reconfigure::Server<pd_controller::PDControllerConfig> *dsrv_;
+
+        ros::Publisher omega_pub;
+        ros::Publisher error_pub;
 
          bool goal_reached = false;
          bool stopped= false;
 
          bool collision_flag;
+         bool latch_distance;
+         bool xy_latch_distance;
          double vel_forward;
          double vel_rot;
          bool rotate_to_goal;

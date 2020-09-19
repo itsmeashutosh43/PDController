@@ -39,12 +39,12 @@ double PD::calculate( double error, double max_ )
     double output = Pout + Dout;
 
 
-    if ((output > 0.2))
+    if ((output > max_))
     {
         output = max_;
     }
 
-    else if((output < 0) && (output < -0.2))
+    else if((output < 0) && (output < -max_))
     {
         output = -max_;
     }

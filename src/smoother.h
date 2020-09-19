@@ -13,9 +13,9 @@ class _Smoother{
     _Smoother(){
 
     }
-    double smooth_velocity(double maximum_vel , double error_tolerance, double k,double error)
+    double smooth_velocity(double maximum_vel , double error_tolerance, double error)
     {
-        
+        double k = 0.4;
         if ((abs(error) == error_tolerance))
         {
             return 0;

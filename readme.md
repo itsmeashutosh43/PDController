@@ -1,3 +1,6 @@
+## Full documentation available at https://docs.google.com/document/d/12OskcdpYfk2VpC2XfKAsr_ltr9boh4TLZNPMKEl9Rro/edit?usp=sharing
+
+
 # PDController
 
 Simple PD Controller that can be integrated with ROS move_base.

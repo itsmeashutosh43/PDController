@@ -60,7 +60,6 @@ namespace pd_controller{
          double linear_tolerance;
          double angular_tolerance;
          double k_p, k_i,k_d;
-         geometry_msgs::PoseWithCovarianceStamped robot_pose;
 
     };
 };
